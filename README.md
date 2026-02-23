@@ -1,6 +1,6 @@
 # scicomp3 — Scientific Computing Assignment Package
 
-Numerical solvers for the 1D wave equation, 2D diffusion equation, and steady-state Laplace equation, built for the Scientific Computing course (Assignment Set 1).
+Numerical solvers for the 1D wave equation, 2D diffusion equation, steady-state Laplace equation, Diffusion-Limited Aggregation (PDE and Monte Carlo), and the Gray-Scott reaction-diffusion system. Built for the Scientific Computing course (Assignment Sets 1 & 2).
 
 ## Quick Start
 
@@ -58,11 +58,15 @@ python scripts/a1_1_smoke_test.py
 │   │   └── solver.py          # solve_ivp() — IVP solver entry point
 │   ├── pde/
 │   │   ├── wave.py            # wave1d_rhs, initial conditions (cases i–iii), analytical solution
-│   │   └── diffusion.py       # diffusion2d_rhs, BCs, stable dt, analytical solution
+│   │   ├── diffusion.py       # diffusion2d_rhs, BCs, stable dt, analytical solution
+│   │   └── gray_scott.py      # gray_scott_rhs, initial conditions, stable dt (Assignment 2.3)
 │   ├── bvp/
 │   │   ├── methods.py         # Iterative methods: Jacobi, Gauss-Seidel, SOR
 │   │   ├── solver.py          # solve_bvp() — BVP solver entry point
 │   │   └── omega.py           # Optimal omega computation and search for SOR
+│   ├── models/
+│   │   ├── dla.py             # PDE-based DLA: run_dla, find_growth_candidates (Assignment 2.1)
+│   │   └── mc_dla.py          # Monte Carlo DLA: run_mc_dla with sticking prob. (Assignment 2.2)
 │   ├── objects/
 │   │   ├── shapes.py          # Geometric coordinate generation (rectangles)
 │   │   ├── sink.py            # Sink region utilities
@@ -76,6 +80,9 @@ python scripts/a1_1_smoke_test.py
 │   ├── test_jacobi.py              # Jacobi iteration convergence + steady state
 │   ├── test_gauss_seidel.py        # Gauss-Seidel iteration convergence
 │   ├── test_sor.py                 # SOR iteration with omega = 1.9
+│   ├── test_dla.py                 # PDE DLA: growth candidates, probabilities, connectivity
+│   ├── test_mc_dla.py              # MC DLA: walk mechanics, sticking, connectivity
+│   ├── test_gray_scott.py          # Gray-Scott RHS, steady states, integration
 │   ├── test_scripts.py             # Smoke tests for all scripts
 │   └── test_solver_comparison.py   # Legacy vs scicomp3 solver parity
 │
@@ -107,7 +114,12 @@ python scripts/a1_1_smoke_test.py
 │   ├── a1_6_insulators_gauss_seidel.py   # Insulator with Gauss-Seidel
 │   ├── a1_6_insulators_sor.py            # Insulator with SOR
 │   ├── a1_6_insulators_sor_animation.py  # Insulator SOR animation
-│   └── a1_6_insulators_k_impact.py       # Insulator impact on convergence
+│   ├── a1_6_insulators_k_impact.py       # Insulator impact on convergence
+│   ├── a2_1_dla.py                       # PDE DLA: single run, cluster + concentration plot
+│   ├── a2_1_dla_eta.py                   # PDE DLA: cluster morphology for different η
+│   ├── a2_2_mc_dla.py                    # MC DLA vs PDE DLA comparison
+│   ├── a2_2_mc_dla_ps.py                 # MC DLA: cluster morphology for different ps
+│   └── a2_3_gray_scott.py                # Gray-Scott: snapshots and final U/V fields
 │
 ├── assignment01.py            # Legacy wave solver (kept for comparison tests)
 ├── run_assignment01_*.py      # Legacy plotting scripts using assignment01.py
