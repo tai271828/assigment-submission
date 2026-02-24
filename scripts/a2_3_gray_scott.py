@@ -21,7 +21,7 @@ from pathlib import Path
 
 import scienceplots  # noqa: F401
 
-styles = ["science"] if shutil.which("latex") else ["science", "no-latex"]
+styles = ["science"] if (shutil.which("latex") and shutil.which("dvipng")) else ["science", "no-latex"]
 plt.style.use(styles)
 
 from scicomp3.pde.gray_scott import (
