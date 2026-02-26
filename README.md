@@ -117,6 +117,7 @@ python scripts/a1_1_smoke_test.py
 │   ├── a1_6_insulators_k_impact.py       # Insulator impact on convergence
 │   ├── a2_1_dla.py                       # PDE DLA: single run, cluster + concentration plot
 │   ├── a2_1_dla_eta.py                   # PDE DLA: cluster morphology for different η
+│   ├── a2_1_dla_performance.py           # PDE DLA: warm-start benefit + SOR vs Jacobi scaling
 │   ├── a2_2_mc_dla.py                    # MC DLA vs PDE DLA comparison
 │   ├── a2_2_mc_dla_ps.py                 # MC DLA: cluster morphology for different ps
 │   └── a2_3_gray_scott.py                # Gray-Scott: snapshots and final U/V fields
