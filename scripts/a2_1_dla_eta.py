@@ -39,11 +39,6 @@ for ax, eta in zip(axes, ETA_VALUES):
     n_cluster = cluster_mask.sum()
     print(f"done  ({n_cluster} sites)")
 
-    cluster_y = np.where(cluster_mask, np.argwhere(cluster_mask)[
-        np.argsort(np.argwhere(cluster_mask)[:, 0] * (N + 1) +
-                   np.argwhere(cluster_mask)[:, 1])
-    ][:, 1] if False else np.full(cluster_mask.sum(), 0.5), np.nan)
-
     # Simple visualisation: binary cluster
     display = np.where(cluster_mask, 1.0, np.nan)
     ax.pcolormesh(X, Y, display, shading="nearest", cmap="Reds", vmin=0, vmax=1)
