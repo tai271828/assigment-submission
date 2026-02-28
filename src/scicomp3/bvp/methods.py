@@ -23,16 +23,17 @@ The METHODS registry maps string keys to setup functions
 
 import numpy as np
 
+
 def _compute_jacobi_weights(is_insulator):
     """
     For each point, count non-insulating neighbours.
     Returns a float array; insulator points get weight 1 to avoid division.
     """
     neighbour_count = (
-        np.roll(~is_insulator, -1, axis=0).astype(float) +
-        np.roll(~is_insulator,  1, axis=0).astype(float) +
-        np.roll(~is_insulator, -1, axis=1).astype(float) +
-        np.roll(~is_insulator,  1, axis=1).astype(float)
+        np.roll(~is_insulator, -1, axis=0).astype(float)
+        + np.roll(~is_insulator, 1, axis=0).astype(float)
+        + np.roll(~is_insulator, -1, axis=1).astype(float)
+        + np.roll(~is_insulator, 1, axis=1).astype(float)
     )
     # Avoid division by zero at insulator points (value won't be used)
     neighbour_count[is_insulator] = 1.0
@@ -67,29 +68,38 @@ def make_jacobi_step(is_insulator, is_sink, **kwargs):
 
         def jacobi_step_with_insulator(y, **kwargs):
             neighbour_sum = (
-                np.roll(y, -1, axis=0) + np.roll(y, 1, axis=0) +
-                np.roll(y, -1, axis=1) + np.roll(y, 1, axis=1)
+                np.roll(y, -1, axis=0)
+                + np.roll(y, 1, axis=0)
+                + np.roll(y, -1, axis=1)
+                + np.roll(y, 1, axis=1)
             )
             # Zero out insulating neighbours' contributions
             insulator_zeroed = y * is_insulator.astype(float)
             neighbour_sum -= (
-                np.roll(insulator_zeroed, -1, axis=0) + np.roll(insulator_zeroed,  1, axis=0) +
-                np.roll(insulator_zeroed, -1, axis=1) + np.roll(insulator_zeroed,  1, axis=1)
+                np.roll(insulator_zeroed, -1, axis=0)
+                + np.roll(insulator_zeroed, 1, axis=0)
+                + np.roll(insulator_zeroed, -1, axis=1)
+                + np.roll(insulator_zeroed, 1, axis=1)
             )
             y_new = neighbour_sum / jacobi_weights
-            y_new[is_insulator] = y[is_insulator]   # leave insulator points unchanged
-            y_new[is_sink] = 0                      # And keep sinks at zero
+            y_new[is_insulator] = y[is_insulator]  # leave insulator points unchanged
+            y_new[is_sink] = 0  # And keep sinks at zero
             return y_new
+
         return jacobi_step_with_insulator
     else:
+
         def jacobi_step(y, **kwargs):
             y_new = 0.25 * (
-                np.roll(y, -1, axis=0) + np.roll(y, 1, axis=0) +
-                np.roll(y, -1, axis=1) + np.roll(y, 1, axis=1)
+                np.roll(y, -1, axis=0)
+                + np.roll(y, 1, axis=0)
+                + np.roll(y, -1, axis=1)
+                + np.roll(y, 1, axis=1)
             )
             # Keep sinks at zero
             y_new[is_sink] = 0
             return y_new
+
         return jacobi_step
 
 
@@ -121,32 +131,39 @@ def make_gauss_seidel_step(is_insulator, is_sink, **kwargs):
               one Gauss-Seidel iteration step, modifying y in place.
     """
     if np.any(is_insulator):
+
         def gauss_seidel_step_with_insulator(y, **kwargs):
             n_i, n_j = y.shape
-            for j in range(1, n_j - 1):        # interior y-points
-                for i in range(n_i):            # all x-points (periodic)
+            for j in range(1, n_j - 1):  # interior y-points
+                for i in range(n_i):  # all x-points (periodic)
                     if is_insulator[i, j] or is_sink[i, j]:
                         continue
                     i_plus = (i + 1) % n_i
                     i_minus = (i - 1) % n_i
                     coords = [(i_plus, j), (i_minus, j), (i, j + 1), (i, j - 1)]
-                    new_value = np.mean([y[coord] for coord in coords if not is_insulator[coord]])
+                    new_value = np.mean(
+                        [y[coord] for coord in coords if not is_insulator[coord]]
+                    )
                     if not np.isnan(new_value):
-                        y[i,j] = new_value
+                        y[i, j] = new_value
             return y
+
         return gauss_seidel_step_with_insulator
     else:
+
         def gauss_seidel_step(y, **kwargs):
             n_i, n_j = y.shape
-            for j in range(1, n_j - 1):        # interior y-points
-                for i in range(n_i):            # all x-points (periodic)
+            for j in range(1, n_j - 1):  # interior y-points
+                for i in range(n_i):  # all x-points (periodic)
                     if is_sink[i, j]:
                         continue
                     i_plus = (i + 1) % n_i
                     i_minus = (i - 1) % n_i
-                    y[i, j] = 0.25 * (y[i_plus, j] + y[i_minus, j] +
-                                    y[i, j + 1] + y[i, j - 1])
+                    y[i, j] = 0.25 * (
+                        y[i_plus, j] + y[i_minus, j] + y[i, j + 1] + y[i, j - 1]
+                    )
             return y
+
         return gauss_seidel_step
 
 
@@ -191,37 +208,51 @@ def make_sor_step(is_insulator, is_sink, omega: float, **kwargs):
 
     # Check if there are any insulating objects
     if np.any(is_insulator):
+
         def sor_step_with_insulator(y, **kwargs):
             n_i, n_j = y.shape
-            for j in range(1, n_j - 1):        # interior y-points
-                for i in range(n_i):            # all x-points (periodic)
+            for j in range(1, n_j - 1):  # interior y-points
+                for i in range(n_i):  # all x-points (periodic)
                     if is_insulator[i, j] or is_sink[i, j]:
                         continue
                     i_plus = (i + 1) % n_i
                     i_minus = (i - 1) % n_i
                     coords = [(i_plus, j), (i_minus, j), (i, j + 1), (i, j - 1)]
-                    new_value = np.mean([y[coord] for coord in coords if not is_insulator[coord]])
+                    new_value = np.mean(
+                        [y[coord] for coord in coords if not is_insulator[coord]]
+                    )
                     if not np.isnan(new_value):
-                        y[i,j] = omega * new_value + (1 - omega) * y[i, j]
+                        y[i, j] = omega * new_value + (1 - omega) * y[i, j]
             return y
+
         return sor_step_with_insulator
     else:
+
         def sor_step(y, **kwargs):
             n_i, n_j = y.shape
-            for j in range(1, n_j - 1):        # interior y-points
-                for i in range(n_i):            # all x-points (periodic)
+            for j in range(1, n_j - 1):  # interior y-points
+                for i in range(n_i):  # all x-points (periodic)
                     if is_sink[i, j]:
                         continue
                     i_plus = (i + 1) % n_i
                     i_minus = (i - 1) % n_i
-                    y[i, j] = omega * 0.25 * (y[i_plus, j] + y[i_minus, j] +
-                                            y[i, j + 1] + y[i, j - 1]) \
-                            + (1 - omega) * y[i, j]
+                    y[i, j] = (
+                        omega
+                        * 0.25
+                        * (y[i_plus, j] + y[i_minus, j] + y[i, j + 1] + y[i, j - 1])
+                        + (1 - omega) * y[i, j]
+                    )
             return y
+
         return sor_step
+
+
+from .methods_fast import make_sor_redblack_step, make_sor_numba_step
 
 METHODS = {
     "jacobi": make_jacobi_step,
     "gauss_seidel": make_gauss_seidel_step,
-    "sor": make_sor_step
+    "sor": make_sor_step,
+    "sor_redblack": make_sor_redblack_step,
+    "sor_numba": make_sor_numba_step,
 }

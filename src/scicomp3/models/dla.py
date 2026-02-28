@@ -31,6 +31,7 @@ from ..bvp.omega import get_optimal_omega
 # Helper functions (also usable standalone / in tests)
 # ---------------------------------------------------------------------------
 
+
 def find_growth_candidates(cluster_mask):
     """Find all growth-candidate sites adjacent to the cluster.
 
@@ -51,13 +52,13 @@ def find_growth_candidates(cluster_mask):
         candidates: Boolean array, same shape as cluster_mask.
     """
     has_cluster_neighbor = (
-        np.roll(cluster_mask, -1, axis=0)   # right in x (periodic)
-        | np.roll(cluster_mask,  1, axis=0)  # left  in x (periodic)
+        np.roll(cluster_mask, -1, axis=0)  # right in x (periodic)
+        | np.roll(cluster_mask, 1, axis=0)  # left  in x (periodic)
         | np.roll(cluster_mask, -1, axis=1)  # up    in y
-        | np.roll(cluster_mask,  1, axis=1)  # down  in y
+        | np.roll(cluster_mask, 1, axis=1)  # down  in y
     )
     candidates = (~cluster_mask) & has_cluster_neighbor
-    candidates[:, 0]  = False  # exclude bottom boundary (j=0)
+    candidates[:, 0] = False  # exclude bottom boundary (j=0)
     candidates[:, -1] = False  # exclude top boundary    (j=N)
     return candidates
 
@@ -81,7 +82,7 @@ def compute_growth_probabilities(concentration, candidates, eta=1.0):
         pg: 1-D float array of normalised probabilities (sum = 1).
     """
     c_vals = np.clip(concentration[candidates], 0.0, None)
-    pg = c_vals ** eta
+    pg = c_vals**eta
     total = pg.sum()
     if total == 0.0:
         # Fallback: uniform probability (shouldn't normally happen)
@@ -93,14 +94,15 @@ def compute_growth_probabilities(concentration, candidates, eta=1.0):
 
 def _bvp_bc(k, c):
     """Enforce Dirichlet BCs for the DLA diffusion problem."""
-    c[:, 0]  = 0.0   # bottom boundary  y=0  →  c = 0
-    c[:, -1] = 1.0   # top boundary     y=1  →  c = 1
+    c[:, 0] = 0.0  # bottom boundary  y=0  →  c = 0
+    c[:, -1] = 1.0  # top boundary     y=1  →  c = 1
     return c
 
 
 # ---------------------------------------------------------------------------
 # Main simulation
 # ---------------------------------------------------------------------------
+
 
 def run_dla(
     N=100,
@@ -110,6 +112,7 @@ def run_dla(
     tol=1e-4,
     max_iter=2_000,
     rng=None,
+    method="sor",
 ):
     """Run a PDE-based DLA simulation on an (N+1)×(N+1) grid.
 
@@ -131,6 +134,8 @@ def run_dla(
                   warm-started; convergence is usually fast).
         rng:      NumPy ``Generator`` for reproducibility.  If None, a new
                   ``default_rng()`` is used.
+        method:   BVP solver method name (default "sor").  Also accepts
+                  "sor_redblack" (vectorised) or "sor_numba" (JIT-compiled).
 
     Returns:
         cluster_mask:  Boolean array (N+1, N+1).  True at every site that
@@ -146,7 +151,7 @@ def run_dla(
 
     # --- Initial cluster: single seed at the bottom-centre ---
     cluster_mask = np.zeros((N + 1, N + 1), dtype=bool)
-    cluster_mask[N // 2, 1] = True   # j=1: first interior row above bottom BC
+    cluster_mask[N // 2, 1] = True  # j=1: first interior row above bottom BC
 
     # --- Initial concentration: linear gradient c(y) = y ---
     # (analytical solution for the empty domain, eq. 5 in the assignment)
@@ -161,7 +166,7 @@ def run_dla(
         # Solve Laplace equation — warm-started from previous concentration
         result = solve_bvp(
             concentration,
-            method="sor",
+            method=method,
             tol=tol,
             max_iter=max_iter,
             post_step=_bvp_bc,
@@ -174,7 +179,7 @@ def run_dla(
         # Find growth candidates
         candidates = find_growth_candidates(cluster_mask)
         if not np.any(candidates):
-            break   # cluster reached top boundary — stop early
+            break  # cluster reached top boundary — stop early
 
         # Select one candidate weighted by growth probability
         candidate_indices = np.argwhere(candidates)
