@@ -42,7 +42,7 @@ SEED = 42
 OMEGA = get_optimal_omega(N)
 TOL = 1e-4
 MAX_ITER = 2_000
-BVP_METHOD = "sor_redblack"  # fast vectorised solver for animation
+BVP_METHOD = "sor_numba"  # fast JIT-compiled solver for animation
 SAVE_EVERY = 1
 
 print(f"DLA animation: N={N}, n_steps={N_STEPS}, η={ETA}, ps={PS}, ω={OMEGA:.4f}")
