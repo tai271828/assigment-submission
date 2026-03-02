@@ -1,0 +1,71 @@
+import numpy as np
+import matplotlib.pyplot as plt
+from pathlib import Path
+
+from scicomp3.core.grid import Grid2D
+from scicomp3.pde.diffusion import apply_diffusion_bc
+from scicomp3.bvp.dla import grow_dla_sor
+
+
+def fixed_bc(k, y):
+    """Enforce diffusion BCs after each iteration."""
+    apply_diffusion_bc(y)
+    return y
+
+
+# Parameters
+N = 50
+grid = Grid2D(N=N, L=1.0)
+omega = 1.89
+eta = 8.0
+n_iter = 50
+seed = (23, 2)
+tol = 1e-3
+
+# Initial guess: zero everywhere, then apply BCs
+c0 = np.zeros(grid.shape)
+apply_diffusion_bc(c0)
+
+# Run DLA by SOR
+result = grow_dla_sor(n_iter,
+             seed,
+             eta,
+             c0,
+             omega,
+             tol,
+             post_step=fixed_bc)
+
+# Save directory
+out_dir = Path(__file__).parent.parent / "images" / "figures"
+out_dir.mkdir(parents=True, exist_ok=True)
+
+# Plotting
+fig, ax = plt.subplots(1, 1, figsize=(6, 4))
+
+# 1. Concentration field
+im = ax.pcolormesh(
+    grid.X, grid.Y, result.y, shading="auto", cmap="gist_heat", vmin=0, vmax=1
+)
+fig.colorbar(
+    im,
+    ax=ax,
+    label=r"$c(x,y)$",
+    location="top",
+    orientation="horizontal",
+    fraction=0.05,
+    pad=0.06,
+)
+ax.tick_params(axis="both", which="minor", direction="out", length=1)
+ax.tick_params(axis="both", which="major", direction="out", length=2.5)
+ax.set_title("SOR solution $c(x, y)$")
+ax.set_xlabel(r"$x$ [m]")
+ax.set_ylabel(r"$y$ [m]")
+ax.set_aspect("equal")
+
+plt.tight_layout()
+
+filename = "a2_1_dla_by_sor.png"
+plt.savefig(out_dir / filename, dpi=150)
+print(f"Saved to {out_dir / filename}")
+
+plt.show()
