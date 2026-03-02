@@ -16,10 +16,10 @@ def _get_neighbours(N, i, j):
 
     Wraps around for the j coordinate, and clamps for the i coordinate
     """
-    i_min = (j - 1) % (N + 1)
-    i_plus = (j + 1) % (N + 1)
-    j_min = max(i - 1, 0)
-    j_plus = min(i + 1, N)
+    i_min = (i - 1) % (N + 1)
+    i_plus = (i + 1) % (N + 1)
+    j_min = max(j - 1, 0)
+    j_plus = min(j + 1, N)
     return [(i_min, j), (i_plus, j), (i, j_min), (i, j_plus)]
 
 
