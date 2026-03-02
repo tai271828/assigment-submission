@@ -25,7 +25,6 @@ ALL_SCRIPTS = sorted(SCRIPTS_DIR.glob("*.py"))
 # These get a 10-minute timeout and the pytest.mark.slow marker.
 SLOW_SCRIPTS = {
     "a1_1_cases_animation.py",  # generates 3 GIF animations
-    "a1_2_diffusion_animation.py",  # generates diffusion animation
     "a1_6_convergence.py",  # runs Jacobi + GS + multiple SOR
 }
 
@@ -42,6 +41,10 @@ KNOWN_BROKEN = {
     "a1_6_omega_for_various_N_sim.py": "Simulation sweep over multiple N values exceeds CI timeout",
     "a1_6_omega_values.py": "Omega sweep simulation exceeds CI timeout",
     "a1_6_omega_for_various_N_plot.py": "Requires pre-generated data/n_vs_omega.pkl from simulation script",
+    "a1_2_diffusion_animation.py": "~197s; diffusion already covered by a1_2_diffusion_verification",
+    "a1_6_insulators_k_impact.py": "~137s; k-impact sweep duplicates a1_6_insulators_sor coverage",
+    "a1_6_insulators_gauss_seidel.py": "~102s; covered by a1_6_iterative_gauss_seidel and unit tests",
+    "a1_6_objects_k_impact.py": "~102s; k-impact sweep duplicates a1_6_insulators_sor coverage",
 }
 
 
