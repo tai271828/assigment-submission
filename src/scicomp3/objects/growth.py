@@ -47,15 +47,17 @@ def make_growth_step(growth_seed,
     # Define growth step
     def growth_step(y, **kwargs):
         # Compute probabilities
-        concentrations_to_power_eta = [y[*c] ** eta for c in candidates]
-        total = np.sum(concentrations_to_power_eta)
+        concentrations = np.array([y[*c] for c in candidates])
+        concentrations = np.clip(concentrations, 0, None) # avoids negative values
+        weights = concentrations ** eta
+        total = np.sum(weights)
         if total == 0:
             raise ValueError(
                 "All candidate points have zero concentration. "
                 "Check that boundary conditions produce a non-zero diffusion field,"
-                "and the SOR solver has converged."
+                "and that the SOR solver has converged."
             )
-        p_values = concentrations_to_power_eta / total
+        p_values = weights / total
 
         # Draw a winner
         indices = np.arange(0, len(candidates))
