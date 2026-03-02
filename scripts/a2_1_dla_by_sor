@@ -14,12 +14,12 @@ def fixed_bc(k, y):
 
 
 # Parameters
-N = 100
+N = 50
 grid = Grid2D(N=N, L=1.0)
 omega = 1.89
-eta = 1.8
-n_iter = 100
-seed = (23, 27)
+eta = 8.0
+n_iter = 50
+seed = (23, 2)
 tol = 1e-3
 
 # Initial guess: zero everywhere, then apply BCs
