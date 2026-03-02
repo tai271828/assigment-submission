@@ -14,7 +14,9 @@ def solve_bvp(
     max_iter=100_000,
     post_step=None,
     insulator_coordinates=None,
+    insulator_mask=None,
     sink_coordinates=None,
+    sink_mask=None,
     **kwargs,
 ):
     """Solve a steady-state BVP using iterative relaxation.
@@ -28,8 +30,20 @@ def solve_bvp(
         max_iter: Maximum number of iterations (default: 100,000)
         post_step: Optional callback f(k, y) -> y applied after each step,
             e.g. to enforce boundary conditions. Must return the modified y.
-        insulator_coordinates: An array of coordinates that signify which
-            points are insulating
+        insulator_coordinates: Array of shape (k, 2) of integer (row, col) grid
+            coordinates marking insulating points. Insulator points are fixed at
+            concentration 1 and excluded from the stencil average of neighbours.
+            Mutually exclusive with insulator_mask; if both are provided,
+            insulator_mask takes precedence.
+        insulator_mask: Boolean array of shape (N+1 x N+1), True at insulating
+            points. Prefer this over insulator_coordinates when a mask is already
+            available.
+        sink_coordinates: Array of shape (k, 2) of integer (row, col) grid
+            coordinates marking sink points. Sink points are fixed at
+            concentration 0. Mutually exclusive with sink_mask; if both are
+            provided, sink_mask takes precedence.
+        sink_mask: Boolean array of shape (N+1 x N+1), True at sink points.
+            Prefer this over sink_coordinates when a mask is already available.
         **kwargs: Additional arguments passed to the step function
             (e.g. omega for SOR)
 
@@ -41,18 +55,23 @@ def solve_bvp(
 
     # Initialise from y0, enforce BCs
     y = y0.copy()
-    # Yeah I know the naming is a bit weird,
-    # but it allows the user to initialize the BCs conveniently
-    # maybe we should introduce one more argument such as pre_step?
+    N = len(y) - 1
+
     if post_step is not None:
         y = post_step(0, y)
 
     # Initialise insulator mask
-    is_insulator = get_insulator_grid(len(y) - 1, insulator_coordinates)
+    if insulator_mask is not None:
+        is_insulator = insulator_mask
+    else:
+        is_insulator = get_insulator_grid(N, insulator_coordinates)
     y[is_insulator] = 1
 
     # Initialise sink mask
-    is_sink = get_sink_grid(len(y) - 1, sink_coordinates)
+    if sink_mask is not None:
+        is_sink = sink_mask
+    else:
+        is_sink = get_sink_grid(N, sink_coordinates)
     y[is_sink] = 0
 
     # Construct step function
