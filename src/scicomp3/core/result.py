@@ -38,6 +38,17 @@ class BVPResult:
     n_iter: int = 0
     delta_history: np.ndarray = None
 
+@dataclass
+class DLASORResult:
+    """Container for DLA results by SOR.
+
+    Attributes:
+        y: Final solution array
+        growth_mask: Final mask array marking the grown aggregate
+    """
+    y: np.ndarray
+    growth_mask: np.ndarray
+
 
 def find_y(res: ODEResult, t):
     """Compute the y-value corresponding to the given t value"""
