@@ -21,7 +21,7 @@ def grow_dla_sor(n_iter_growth,
 
     Alternates between solving the steady-state diffusion equation (via SOR)
     and growing the aggregate by one point, for n_iter_growth steps. The
-    grown aggregate is treated as an insulating object in the diffusion solve.
+    grown aggregate is treated as a sink object in the diffusion solve.
 
     Args:
         n_iter_growth: Number of growth steps to perform.
@@ -50,7 +50,7 @@ def grow_dla_sor(n_iter_growth,
             tol=tol,
             max_iter=max_iter_sor,
             post_step=post_step,
-            insulator_mask=growth_mask,
+            sink_mask=growth_mask,
             omega=omega,
             **kwargs
         )
