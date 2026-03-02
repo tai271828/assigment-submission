@@ -4,7 +4,9 @@ Growth object for Diffusion Limited Aggregation (DLA).
 The growth state (current aggregate and candidate points) is maintained
 internally by the closure returned by make_growth_step.
 """
+
 import numpy as np
+
 
 def _get_neighbours(N, i, j):
     """
@@ -14,16 +16,18 @@ def _get_neighbours(N, i, j):
 
     Wraps around for the j coordinate, and clamps for the i coordinate
     """
-    i_min = max(i - 1, 0)
-    i_plus = min(i + 1, N)
-    j_min = (j - 1) % N
-    j_plus = (j + 1) % N
+    i_min = (j - 1) % (N + 1)
+    i_plus = (j + 1) % (N + 1)
+    j_min = max(i - 1, 0)
+    j_plus = min(i + 1, N)
     return [(i_min, j), (i_plus, j), (i, j_min), (i, j_plus)]
 
 
-def make_growth_step(growth_seed,
-                     eta: float = 1.8,
-                     N: int = 100,) -> tuple[callable, np.ndarray]:
+def make_growth_step(
+    growth_seed,
+    eta: float = 1.8,
+    N: int = 100,
+) -> tuple[callable, np.ndarray]:
     """
     Returns a growth_step function.
 
@@ -40,7 +44,7 @@ def make_growth_step(growth_seed,
             of growth points
     """
     # Set up initial conditions
-    growth_mask = np.zeros(shape=(N+1, N+1), dtype=bool)
+    growth_mask = np.zeros(shape=(N + 1, N + 1), dtype=bool)
     growth_mask[*growth_seed] = True
     candidates = [c for c in _get_neighbours(N, *growth_seed) if not growth_mask[*c]]
 
@@ -48,8 +52,8 @@ def make_growth_step(growth_seed,
     def growth_step(y, **kwargs):
         # Compute probabilities
         concentrations = np.array([y[*c] for c in candidates])
-        concentrations = np.clip(concentrations, 0, None) # avoids negative values
-        weights = concentrations ** eta
+        concentrations = np.clip(concentrations, 0, None)  # avoids negative values
+        weights = concentrations**eta
         total = np.sum(weights)
         if total == 0:
             raise ValueError(
@@ -73,4 +77,5 @@ def make_growth_step(growth_seed,
             if not growth_mask[*new_candidate]:
                 candidates.append(new_candidate)
         return growth_mask
+
     return growth_step, growth_mask
