@@ -24,33 +24,24 @@ ALL_SCRIPTS = sorted(SCRIPTS_DIR.glob("*.py"))
 # Scripts that take significantly longer (animations, exhaustive search).
 # These get a 10-minute timeout and the pytest.mark.slow marker.
 SLOW_SCRIPTS = {
-    "a1_1_cases_animation.py",        # generates 3 GIF animations
-    "a1_2_diffusion_animation.py",     # generates diffusion animation
-    "a1_6_seeking_optimal_omega.py",   # ternary search over omega
-    "a1_6_convergence.py",            # runs Jacobi + GS + multiple SOR
+    "a1_1_cases_animation.py",  # generates 3 GIF animations
+    "a1_2_diffusion_animation.py",  # generates diffusion animation
+    "a1_6_convergence.py",  # runs Jacobi + GS + multiple SOR
 }
 
 # Scripts with known pre-existing issues (not caused by this test file).
 # Maps filename -> reason string for xfail.
 KNOWN_BROKEN = {
-    "a1_1_cases_animation.py":
-        "Grid1D size mismatch (N vs N+1) causes shape error in column_stack",
-    "a1_1_smoke_test.py":
-        "Hardcodes matplotlib.use('TkAgg') which blocks in headless environments",
-    "a1_1_cases_compared_to_analytical.py":
-        "Hardcodes matplotlib.use('TkAgg') which blocks in headless environments",
-    "a1_1_cases_plot.py":
-        "Hardcodes matplotlib.use('TkAgg') which blocks in headless environments",
-    "a1_2_diffusion.py":
-        "Incorrect image path",
-    "a1_6_optimal_omega.py":
-        "Sweeps 39 omega values (including omega~0.05) causing >10min runtime",
-    "a1_6_omega_for_various_N_sim.py":
-        "Simulation sweep over multiple N values exceeds CI timeout",
-    "a1_6_omega_values.py":
-        "Omega sweep simulation exceeds CI timeout",
-    "a1_6_omega_for_various_N_plot.py":
-        "Requires pre-generated data/n_vs_omega.pkl from simulation script",
+    "a1_6_seeking_optimal_omega.py": "Ternary search over omega takes too much time",
+    "a1_1_cases_animation.py": "Grid1D size mismatch (N vs N+1) causes shape error in column_stack",
+    "a1_1_smoke_test.py": "Hardcodes matplotlib.use('TkAgg') which blocks in headless environments",
+    "a1_1_cases_compared_to_analytical.py": "Hardcodes matplotlib.use('TkAgg') which blocks in headless environments",
+    "a1_1_cases_plot.py": "Hardcodes matplotlib.use('TkAgg') which blocks in headless environments",
+    "a1_2_diffusion.py": "Incorrect image path",
+    "a1_6_optimal_omega.py": "Sweeps 39 omega values (including omega~0.05) causing >10min runtime",
+    "a1_6_omega_for_various_N_sim.py": "Simulation sweep over multiple N values exceeds CI timeout",
+    "a1_6_omega_values.py": "Omega sweep simulation exceeds CI timeout",
+    "a1_6_omega_for_various_N_plot.py": "Requires pre-generated data/n_vs_omega.pkl from simulation script",
 }
 
 
@@ -83,9 +74,7 @@ def test_script_runs(script):
             cwd=str(script.parent.parent),  # run from project root
         )
     except subprocess.TimeoutExpired:
-        pytest.fail(
-            f"Script {script.name} timed out after {timeout}s"
-        )
+        pytest.fail(f"Script {script.name} timed out after {timeout}s")
 
     assert result.returncode == 0, (
         f"Script {script.name} failed with exit code {result.returncode}\n"
