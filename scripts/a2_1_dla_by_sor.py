@@ -22,6 +22,8 @@ n_iter = 50
 seed = (23, 2)
 tol = 1e-3
 
+print(f"DLA: N={N}, n_steps={n_iter}, η={eta}, ω={omega:.4f}")
+
 # Initial guess: zero everywhere, then apply BCs
 c0 = np.zeros(grid.shape)
 apply_diffusion_bc(c0)
@@ -35,6 +37,8 @@ def track_growth(step, y, growth_mask):
     """Record growth order for each newly added site."""
     new_sites = growth_mask & np.isnan(growth_order)
     growth_order[new_sites] = step
+    if step % 50 == 0:
+        print(f"  step {step}/{n_iter}  cluster size={growth_mask.sum()}")
 
 
 # Run DLA by SOR
@@ -66,6 +70,7 @@ ax_cluster.set_xlabel(r"$x$ [m]")
 ax_cluster.set_ylabel(r"$y$ [m]")
 ax_cluster.set_aspect("equal")
 n_sites = np.count_nonzero(~np.isnan(growth_order))
+print(f"Done. Cluster size: {n_sites} sites")
 ax_cluster.set_title(f"DLA cluster ($\\eta={eta}$) — {n_sites} sites")
 
 # 2. Concentration field (right)
