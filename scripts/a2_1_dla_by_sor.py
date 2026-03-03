@@ -13,24 +13,29 @@ def fixed_bc(k, y):
     return y
 
 
-# Parameters
+# ── Parameters ──────────────────────────────────────────────────────────────
 N = 50
+N_STEPS = 50
+ETA = 8.0
+SEED = 42
+OMEGA = 1.89
+TOL = 1e-3
+MAX_ITER = 2_000
+
 grid = Grid2D(N=N, L=1.0)
-omega = 1.89
-eta = 8.0
-n_iter = 50
-seed = (23, 2)
-tol = 1e-3
+growth_seed = (23, 2)
 
-print(f"DLA: N={N}, n_steps={n_iter}, η={eta}, ω={omega:.4f}")
+print(f"DLA: N={N}, n_steps={N_STEPS}, η={ETA}, ω={OMEGA:.4f}")
 
-# Initial guess: zero everywhere, then apply BCs
+# ── Run DLA simulation ──────────────────────────────────────────────────────
+np.random.seed(SEED)
+
 c0 = np.zeros(grid.shape)
 apply_diffusion_bc(c0)
 
 # Track growth order via callback
 growth_order = np.full((N + 1, N + 1), np.nan)
-growth_order[seed] = 0
+growth_order[growth_seed] = 0
 
 
 def track_growth(step, y, growth_mask):
@@ -38,12 +43,19 @@ def track_growth(step, y, growth_mask):
     new_sites = growth_mask & np.isnan(growth_order)
     growth_order[new_sites] = step
     if step % 50 == 0:
-        print(f"  step {step}/{n_iter}  cluster size={growth_mask.sum()}")
+        print(f"  step {step}/{N_STEPS}  cluster size={growth_mask.sum()}")
 
 
-# Run DLA by SOR
 result = grow_dla_sor(
-    n_iter, seed, eta, c0, omega, tol, post_step=fixed_bc, post_growth=track_growth
+    N_STEPS,
+    growth_seed,
+    ETA,
+    c0,
+    OMEGA,
+    TOL,
+    max_iter_sor=MAX_ITER,
+    post_step=fixed_bc,
+    post_growth=track_growth,
 )
 
 # Save directory
@@ -63,7 +75,7 @@ im_cluster = ax_cluster.pcolormesh(
     shading="nearest",
     cmap="plasma",
     vmin=0,
-    vmax=n_iter,
+    vmax=N_STEPS,
 )
 fig.colorbar(im_cluster, ax=ax_cluster, label="Growth step", fraction=0.046, pad=0.04)
 ax_cluster.set_xlabel(r"$x$ [m]")
@@ -71,7 +83,7 @@ ax_cluster.set_ylabel(r"$y$ [m]")
 ax_cluster.set_aspect("equal")
 n_sites = np.count_nonzero(~np.isnan(growth_order))
 print(f"Done. Cluster size: {n_sites} sites")
-ax_cluster.set_title(f"DLA cluster ($\\eta={eta}$) — {n_sites} sites")
+ax_cluster.set_title(f"DLA cluster ($\\eta={ETA}$) — {n_sites} sites")
 
 # 2. Concentration field (right)
 ax_conc = axes[1]

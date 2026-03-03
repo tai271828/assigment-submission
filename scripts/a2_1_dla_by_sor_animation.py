@@ -34,7 +34,7 @@ def fixed_bc(k, y):
     return y
 
 
-# ── Parameters ──────────────────────────────────────────────────────────────
+# -- Parameters --------------------------------------------------------------
 N = 50
 N_STEPS = 200
 ETA = 1.0
@@ -48,7 +48,7 @@ growth_seed = (N // 2, 1)
 
 print(f"DLA animation: N={N}, n_steps={N_STEPS}, η={ETA}, ω={OMEGA:.4f}")
 
-# ── Run DLA simulation ──────────────────────────────────────────────────────
+# -- Run DLA simulation -----------------------------------------------------
 np.random.seed(SEED)
 
 c0 = np.zeros(grid.shape)
@@ -85,7 +85,7 @@ result = grow_dla_sor(
 n_cluster = result.growth_mask.sum()
 print(f"Done. Cluster size: {n_cluster} sites, {len(frames)} frames")
 
-# ── Build animation ──────────────────────────────────────────────────────────
+# -- Build animation --------------------------------------------------------
 fig, axes = plt.subplots(1, 2, figsize=(11, 5))
 
 # Left: cluster coloured by growth order
