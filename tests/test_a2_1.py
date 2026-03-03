@@ -10,6 +10,8 @@ Parameters lifted from the script:
 Reduced here to N=30, N_STEPS=20 for speed.
 """
 
+from pathlib import Path
+
 import numpy as np
 import pytest
 
@@ -37,6 +39,7 @@ def fixed_bc(k, y):
 
 # -- Fixtures -----------------------------------------------------------------
 
+
 @pytest.fixture
 def grid():
     return Grid2D(N=N, L=1.0)
@@ -50,8 +53,14 @@ def dla_result(request, grid):
     c0 = np.zeros(grid.shape)
     apply_diffusion_bc(c0)
     result = grow_dla_sor(
-        N_STEPS, GROWTH_SEED, eta, c0, OMEGA, TOL,
-        max_iter_sor=MAX_ITER, post_step=fixed_bc,
+        N_STEPS,
+        GROWTH_SEED,
+        eta,
+        c0,
+        OMEGA,
+        TOL,
+        max_iter_sor=MAX_ITER,
+        post_step=fixed_bc,
     )
     return eta, result
 
@@ -72,13 +81,21 @@ def growth_order(grid):
         order[new] = step
 
     grow_dla_sor(
-        N_STEPS, GROWTH_SEED, eta, c0, OMEGA, TOL,
-        max_iter_sor=MAX_ITER, post_step=fixed_bc, post_growth=track,
+        N_STEPS,
+        GROWTH_SEED,
+        eta,
+        c0,
+        OMEGA,
+        TOL,
+        max_iter_sor=MAX_ITER,
+        post_step=fixed_bc,
+        post_growth=track,
     )
     return order
 
 
 # -- Tests: per-eta properties ------------------------------------------------
+
 
 class TestDLAEtaSweep:
     """Tests for DLA growth across eta values (Assignment 2.1)."""
@@ -126,12 +143,13 @@ class TestDLAEtaSweep:
         eta, result = dla_result
         sink_vals = result.y[result.growth_mask]
         n_nonzero = np.count_nonzero(np.abs(sink_vals) > 1e-8)
-        assert n_nonzero <= 1, (
-            f"eta={eta}: {n_nonzero} sink sites non-zero (expected at most 1)"
-        )
+        assert (
+            n_nonzero <= 1
+        ), f"eta={eta}: {n_nonzero} sink sites non-zero (expected at most 1)"
 
 
 # -- Tests: growth-order tracking ---------------------------------------------
+
 
 class TestGrowthOrder:
     """Tests for the post_growth callback used in the script."""
@@ -154,6 +172,7 @@ class TestGrowthOrder:
 
 # -- Tests: reproducibility and cross-eta properties --------------------------
 
+
 class TestReproducibility:
     """Fixed seed must produce identical clusters."""
 
@@ -167,10 +186,126 @@ class TestReproducibility:
             c0 = np.zeros(grid.shape)
             apply_diffusion_bc(c0)
             r = grow_dla_sor(
-                N_STEPS, GROWTH_SEED, eta, c0, OMEGA, TOL,
-                max_iter_sor=MAX_ITER, post_step=fixed_bc,
+                N_STEPS,
+                GROWTH_SEED,
+                eta,
+                c0,
+                OMEGA,
+                TOL,
+                max_iter_sor=MAX_ITER,
+                post_step=fixed_bc,
             )
             masks.append(r.growth_mask)
             fields.append(r.y)
         assert np.array_equal(masks[0], masks[1]), "Masks differ across runs"
         assert np.allclose(fields[0], fields[1]), "Fields differ across runs"
+
+
+# -- Tests: regression against stored reference --------------------------------
+
+# Parameters matching scripts/a2_1_dla_by_sor.py exactly
+_REF_N = 50
+_REF_N_STEPS = 100
+_REF_ETA = 1.0
+_REF_SEED = 42
+_REF_OMEGA = get_optimal_omega(_REF_N)
+_REF_TOL = 1e-4
+_REF_MAX_ITER = 2_000
+_REF_GROWTH_SEED = (_REF_N // 2, _REF_N // 2)
+
+_DATA_DIR = Path(__file__).parent.parent / "data"
+_REF_FILE = _DATA_DIR / "dla_reference_eta1.0.npz"
+
+
+@pytest.fixture(scope="module")
+def reference_data():
+    """Load stored reference arrays from the known-good run."""
+    assert _REF_FILE.exists(), f"Reference file not found: {_REF_FILE}"
+    return np.load(_REF_FILE)
+
+
+@pytest.fixture(scope="module")
+def regression_result():
+    """Run DLA with the same parameters as scripts/a2_1_dla_by_sor.py."""
+    np.random.seed(_REF_SEED)
+    c0 = np.zeros((_REF_N + 1, _REF_N + 1))
+    apply_diffusion_bc(c0)
+
+    growth_order = np.full((_REF_N + 1, _REF_N + 1), np.nan)
+    growth_order[_REF_GROWTH_SEED] = 0
+
+    def track(step, y, growth_mask):
+        new = growth_mask & np.isnan(growth_order)
+        growth_order[new] = step
+
+    result = grow_dla_sor(
+        _REF_N_STEPS,
+        _REF_GROWTH_SEED,
+        _REF_ETA,
+        c0,
+        _REF_OMEGA,
+        _REF_TOL,
+        max_iter_sor=_REF_MAX_ITER,
+        post_step=fixed_bc,
+        post_growth=track,
+    )
+    return result, growth_order
+
+
+class TestDLAEtaSweepSameContent:
+    """Regression tests: grow_dla_sor must reproduce the stored reference.
+
+    Reference file: data/dla_reference_eta1.0.npz
+    Generated with: N=50, N_STEPS=100, ETA=1.0, SEED=42,
+                    OMEGA=get_optimal_omega(50), TOL=1e-4, MAX_ITER=2000,
+                    growth_seed=(25, 25).
+    """
+
+    def test_growth_mask_identical(self, regression_result, reference_data):
+        """The grown cluster must be bit-identical to the reference."""
+        result, _ = regression_result
+        np.testing.assert_array_equal(
+            result.growth_mask,
+            reference_data["growth_mask"],
+            err_msg="growth_mask differs from reference",
+        )
+
+    def test_concentration_field_close(self, regression_result, reference_data):
+        """Concentration field must match reference within SOR tolerance."""
+        result, _ = regression_result
+        np.testing.assert_allclose(
+            result.y,
+            reference_data["y"],
+            atol=1e-10,
+            rtol=1e-10,
+            err_msg="Concentration field differs from reference",
+        )
+
+    def test_growth_order_identical(self, regression_result, reference_data):
+        """Growth order (which site was added at which step) must match."""
+        _, growth_order = regression_result
+        ref_order = reference_data["growth_order"]
+        # Compare only non-NaN entries (NaN != NaN by IEEE)
+        mask = ~np.isnan(ref_order)
+        assert np.array_equal(
+            mask, ~np.isnan(growth_order)
+        ), "Different sites have growth-order entries"
+        np.testing.assert_array_equal(
+            growth_order[mask],
+            ref_order[mask],
+            err_msg="Growth order values differ from reference",
+        )
+
+    def test_cluster_size(self, regression_result, reference_data):
+        """Cluster size must match reference exactly."""
+        result, _ = regression_result
+        expected = np.count_nonzero(reference_data["growth_mask"])
+        actual = np.count_nonzero(result.growth_mask)
+        assert actual == expected, f"Cluster size {actual} != reference {expected}"
+
+    def test_concentration_stats(self, regression_result, reference_data):
+        """Summary statistics of the concentration field must match."""
+        result, _ = regression_result
+        ref_y = reference_data["y"]
+        np.testing.assert_allclose(result.y.mean(), ref_y.mean(), rtol=1e-10)
+        np.testing.assert_allclose(result.y.std(), ref_y.std(), rtol=1e-10)

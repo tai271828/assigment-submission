@@ -7,5 +7,6 @@ dist/
 build/
 *.egg-info/
 uv.lock
-data/
+data/*
+!data/dla_reference_eta1.0.npz
 .pkl
