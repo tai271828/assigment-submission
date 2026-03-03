@@ -5,6 +5,7 @@ from pathlib import Path
 from scicomp3.core.grid import Grid2D
 from scicomp3.pde.diffusion import apply_diffusion_bc
 from scicomp3.bvp.dla import grow_dla_sor
+from scicomp3.bvp.omega import get_optimal_omega
 
 
 def fixed_bc(k, y):
@@ -13,21 +14,21 @@ def fixed_bc(k, y):
     return y
 
 
-# ── Parameters ──────────────────────────────────────────────────────────────
+# -- Parameters --------------------------------------------------------------
 N = 50
-N_STEPS = 50
-ETA = 8.0
+N_STEPS = 100
+ETA = 1.0
 SEED = 42
-OMEGA = 1.89
-TOL = 1e-3
+OMEGA = get_optimal_omega(N)
+TOL = 1e-4
 MAX_ITER = 2_000
 
 grid = Grid2D(N=N, L=1.0)
-growth_seed = (23, 2)
+growth_seed = (N // 2, N // 2)
 
 print(f"DLA: N={N}, n_steps={N_STEPS}, η={ETA}, ω={OMEGA:.4f}")
 
-# ── Run DLA simulation ──────────────────────────────────────────────────────
+# -- Run DLA simulation -----------------------------------------------------
 np.random.seed(SEED)
 
 c0 = np.zeros(grid.shape)
@@ -42,7 +43,7 @@ def track_growth(step, y, growth_mask):
     """Record growth order for each newly added site."""
     new_sites = growth_mask & np.isnan(growth_order)
     growth_order[new_sites] = step
-    if step % 50 == 0:
+    if step % 10 == 0:
         print(f"  step {step}/{N_STEPS}  cluster size={growth_mask.sum()}")
 
 

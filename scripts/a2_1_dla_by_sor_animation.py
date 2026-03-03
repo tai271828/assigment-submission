@@ -36,7 +36,7 @@ def fixed_bc(k, y):
 
 # -- Parameters --------------------------------------------------------------
 N = 50
-N_STEPS = 200
+N_STEPS = 100
 ETA = 1.0
 SEED = 42
 OMEGA = get_optimal_omega(N)
@@ -44,7 +44,7 @@ TOL = 1e-4
 MAX_ITER = 2_000
 
 grid = Grid2D(N=N, L=1.0)
-growth_seed = (N // 2, 1)
+growth_seed = (N // 2, N // 2)
 
 print(f"DLA animation: N={N}, n_steps={N_STEPS}, η={ETA}, ω={OMEGA:.4f}")
 
@@ -66,7 +66,7 @@ def capture_growth(step, y, growth_mask):
     new_sites = growth_mask & np.isnan(growth_order)
     growth_order[new_sites] = step
     frames.append((growth_order.copy(), y.copy()))
-    if step % 50 == 0:
+    if step % 10 == 0:
         print(f"  step {step}/{N_STEPS}  cluster size={growth_mask.sum()}")
 
 
