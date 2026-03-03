@@ -26,36 +26,60 @@ tol = 1e-3
 c0 = np.zeros(grid.shape)
 apply_diffusion_bc(c0)
 
+# Track growth order via callback
+growth_order = np.full((N + 1, N + 1), np.nan)
+growth_order[seed] = 0
+
+
+def track_growth(step, y, growth_mask):
+    """Record growth order for each newly added site."""
+    new_sites = growth_mask & np.isnan(growth_order)
+    growth_order[new_sites] = step
+
+
 # Run DLA by SOR
-result = grow_dla_sor(n_iter, seed, eta, c0, omega, tol, post_step=fixed_bc)
+result = grow_dla_sor(
+    n_iter, seed, eta, c0, omega, tol, post_step=fixed_bc, post_growth=track_growth
+)
 
 # Save directory
 out_dir = Path(__file__).parent.parent / "images" / "figures"
 out_dir.mkdir(parents=True, exist_ok=True)
 
 # Plotting
-fig, ax = plt.subplots(1, 1, figsize=(6, 4))
+fig, axes = plt.subplots(1, 2, figsize=(11, 5))
 
-# 1. Concentration field
-im = ax.pcolormesh(
-    grid.X, grid.Y, result.y, shading="auto", cmap="gist_heat", vmin=0, vmax=1
+# 1. Cluster coloured by growth order (left)
+ax_cluster = axes[0]
+cluster_display = np.where(np.isnan(growth_order), np.nan, growth_order)
+im_cluster = ax_cluster.pcolormesh(
+    grid.X,
+    grid.Y,
+    cluster_display,
+    shading="nearest",
+    cmap="plasma",
+    vmin=0,
+    vmax=n_iter,
 )
-fig.colorbar(
-    im,
-    ax=ax,
-    label=r"$c(x,y)$",
-    location="top",
-    orientation="horizontal",
-    fraction=0.05,
-    pad=0.06,
-)
-ax.tick_params(axis="both", which="minor", direction="out", length=1)
-ax.tick_params(axis="both", which="major", direction="out", length=2.5)
-ax.set_title("SOR solution $c(x, y)$")
-ax.set_xlabel(r"$x$ [m]")
-ax.set_ylabel(r"$y$ [m]")
-ax.set_aspect("equal")
+fig.colorbar(im_cluster, ax=ax_cluster, label="Growth step", fraction=0.046, pad=0.04)
+ax_cluster.set_xlabel(r"$x$ [m]")
+ax_cluster.set_ylabel(r"$y$ [m]")
+ax_cluster.set_aspect("equal")
+n_sites = np.count_nonzero(~np.isnan(growth_order))
+ax_cluster.set_title(f"DLA cluster ($\\eta={eta}$) — {n_sites} sites")
 
+# 2. Concentration field (right)
+ax_conc = axes[1]
+im_conc = ax_conc.pcolormesh(
+    grid.X, grid.Y, result.y, shading="nearest", cmap="gist_heat", vmin=0, vmax=1
+)
+fig.colorbar(im_conc, ax=ax_conc, label=r"$c(x,y)$", fraction=0.046, pad=0.04)
+ax_conc.set_xlabel(r"$x$ [m]")
+ax_conc.set_ylabel(r"$y$ [m]")
+ax_conc.set_aspect("equal")
+ax_conc.set_title("Concentration field $c(x, y)$")
+
+fig.suptitle(f"PDE-based DLA on a {N}$\\times${N} grid", fontsize=14)
 plt.tight_layout()
 
 filename = "a2_1_dla_by_sor.png"
