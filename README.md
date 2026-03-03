@@ -1,6 +1,6 @@
 # scicomp3 — Scientific Computing Assignment Package
 
-Numerical solvers for the 1D wave equation, 2D diffusion equation, and steady-state Laplace equation, built for the Scientific Computing course (Assignment Set 1).
+Numerical solvers for the 1D wave equation, 2D diffusion equation, steady-state Laplace equation, and Diffusion Limited Aggregation (DLA), built for the Scientific Computing course (Assignment Sets 1 & 2).
 
 ## Quick Start
 
@@ -52,7 +52,7 @@ python scripts/a1_1_smoke_test.py
 ├── src/scicomp3/              # Main package
 │   ├── core/
 │   │   ├── grid.py            # Grid1D, Grid2D — spatial discretization
-│   │   └── result.py          # ODEResult, BVPResult — solver output containers
+│   │   └── result.py          # ODEResult, BVPResult, DLASORResult — solver output containers
 │   ├── ode/
 │   │   ├── methods.py         # Time-stepping: Euler, symplectic Euler
 │   │   └── solver.py          # solve_ivp() — IVP solver entry point
@@ -62,11 +62,13 @@ python scripts/a1_1_smoke_test.py
 │   ├── bvp/
 │   │   ├── methods.py         # Iterative methods: Jacobi, Gauss-Seidel, SOR
 │   │   ├── solver.py          # solve_bvp() — BVP solver entry point
-│   │   └── omega.py           # Optimal omega computation and search for SOR
+│   │   ├── omega.py           # Optimal omega computation and search for SOR
+│   │   └── dla.py             # grow_dla_sor() — DLA simulation via SOR
 │   ├── objects/
 │   │   ├── shapes.py          # Geometric coordinate generation (rectangles)
 │   │   ├── sink.py            # Sink region utilities
-│   │   └── insulator.py       # Insulator region utilities
+│   │   ├── insulator.py       # Insulator region utilities
+│   │   └── growth.py          # DLA growth step logic (candidate selection, probabilistic growth)
 │   └── validation/
 │       └── validation.py      # Boundary condition validation utilities
 │
@@ -76,8 +78,8 @@ python scripts/a1_1_smoke_test.py
 │   ├── test_jacobi.py              # Jacobi iteration convergence + steady state
 │   ├── test_gauss_seidel.py        # Gauss-Seidel iteration convergence
 │   ├── test_sor.py                 # SOR iteration with omega = 1.9
-│   ├── test_scripts.py             # Smoke tests for all scripts
-│   └── test_solver_comparison.py   # Legacy vs scicomp3 solver parity
+│   ├── test_a2_1.py                # DLA growth correctness + reference comparison
+│   └── test_scripts.py             # Smoke tests for all scripts
 │
 ├── scripts/                   # Runnable plotting/animation scripts
 │   ├── a1_1_smoke_test.py                # Quick wave equation smoke test
@@ -107,11 +109,12 @@ python scripts/a1_1_smoke_test.py
 │   ├── a1_6_insulators_gauss_seidel.py   # Insulator with Gauss-Seidel
 │   ├── a1_6_insulators_sor.py            # Insulator with SOR
 │   ├── a1_6_insulators_sor_animation.py  # Insulator SOR animation
-│   └── a1_6_insulators_k_impact.py       # Insulator impact on convergence
+│   ├── a1_6_insulators_k_impact.py       # Insulator impact on convergence
+│   ├── a2_1_dla_by_sor.py               # DLA cluster via SOR (static plot)
+│   ├── a2_1_dla_by_sor_animation.py     # DLA growth animation (GIF)
+│   └── a2_1_dla_eta_sweep.py            # DLA cluster shape vs eta
 │
-├── assignment01.py            # Legacy wave solver (kept for comparison tests)
-├── run_assignment01_*.py      # Legacy plotting scripts using assignment01.py
-├── data/                      # Cached simulation data (e.g. n_vs_omega.pkl)
+├── data/                      # Cached simulation data (e.g. n_vs_omega.pkl, DLA references)
 ├── pyproject.toml             # Build config (hatchling), deps, pytest settings
 └── images/                    # Generated figures and GIFs
 ```
@@ -235,6 +238,33 @@ Methods are registered in `scicomp3.ode.methods.METHODS` (IVP) and `scicomp3.bvp
 
 **Sink and insulator objects.** The BVP solvers support sink (Dirichlet, c=0) and insulator (Neumann, zero-flux) objects via coordinate arrays passed to `solve_bvp()`.
 
+### Diffusion Limited Aggregation (DLA)
+
+`grow_dla_sor()` alternates between solving the steady-state diffusion equation via SOR and growing the aggregate by one point:
+
+```python
+from scicomp3.bvp.dla import grow_dla_sor
+from scicomp3.bvp.omega import get_optimal_omega
+
+N = 50
+omega = get_optimal_omega(N)
+result = grow_dla_sor(
+    n_iter_growth=100,
+    growth_seed=(N // 2, 1),
+    eta=1.0,
+    y0=c0,
+    omega=omega,
+    tol=1e-4,
+    max_iter_sor=2_000,
+    post_step=fixed_bc,        # enforce BCs each SOR iteration
+    post_growth=my_callback,   # optional: called after each growth step
+)
+# result.y            — final concentration field
+# result.growth_mask  — boolean mask of cluster sites
+```
+
+The `eta` parameter controls cluster shape: low eta gives bushy growth, high eta gives spindly branches.
+
 ## Running Tests
 
 ```bash
@@ -254,8 +284,8 @@ The test suite covers:
 - **test_jacobi.py** — Jacobi iteration convergence, steady-state profile, boundary checks, monotonicity.
 - **test_gauss_seidel.py** — Gauss-Seidel convergence, fewer iterations than Jacobi.
 - **test_sor.py** — SOR iteration with omega=1.9.
+- **test_a2_1.py** — DLA growth correctness and comparison against reference data.
 - **test_scripts.py** — Smoke tests that every script under `scripts/` runs without error.
-- **test_solver_comparison.py** — Legacy `assignment01.py` and `scicomp3` solvers produce identical interior-point results.
 
 ## Running Scripts
 
@@ -291,6 +321,15 @@ python scripts/a1_6_objects_k_impact.py
 
 # Optimal omega search with objects → images/figures/
 python scripts/a1_6_seeking_optimal_omega.py
+
+# DLA cluster via SOR → images/figures/
+python scripts/a2_1_dla_by_sor.py
+
+# DLA growth animation → images/gifs/
+python scripts/a2_1_dla_by_sor_animation.py
+
+# DLA cluster shape vs eta → images/figures/
+python scripts/a2_1_dla_eta_sweep.py
 ```
 
 ## Adding a New Time-Stepping Method
@@ -329,10 +368,6 @@ def my_pde_rhs(t, y, *params):
 
 2. Write a post_step if boundary conditions need enforcement.
 3. Call `solve_ivp(my_pde_rhs, ...)` with appropriate method and parameters.
-
-## Legacy Code
-
-`assignment01.py` at the project root is the original wave equation implementation. It uses a different API (`integrate_euler` with `**kwargs`) and has known boundary pollution from `np.roll` without post-step correction. It is kept for backward compatibility and tested against `scicomp3` in `test_solver_comparison.py`.
 
 ## Dependencies
 
