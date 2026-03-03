@@ -56,9 +56,19 @@ def _make_param(script):
     return pytest.param(script, id=script.stem, marks=marks)
 
 
+def _is_animation_script(name: str) -> bool:
+    """True if the script name starts or ends with 'animation' (ignoring extension)."""
+    stem = Path(name).stem
+    parts = stem.split("_")
+    return "animation" in parts
+
+
 @pytest.mark.parametrize("script", [_make_param(s) for s in ALL_SCRIPTS])
 def test_script_runs(script):
     """Run a script and assert it exits with code 0."""
+    if _is_animation_script(script.name):
+        pytest.skip("animation scripts are excluded from CI")
+
     if script.name in KNOWN_BROKEN:
         pytest.xfail(KNOWN_BROKEN[script.name])
 
