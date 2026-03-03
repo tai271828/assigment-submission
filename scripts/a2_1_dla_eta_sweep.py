@@ -66,8 +66,8 @@ for eta in ETAS:
     results.append((eta, growth_order.copy(), result.y))
 
 # -- Plotting -----------------------------------------------------------------
-n_cols = len(ETAS)
-fig, axes = plt.subplots(1, n_cols, figsize=(4 * n_cols, 4), constrained_layout=True)
+n_rows = len(ETAS)
+fig, axes = plt.subplots(n_rows, 1, figsize=(4, 4 * n_rows), constrained_layout=True)
 
 for ax, (eta, growth_order, _) in zip(axes, results):
     cluster_display = np.where(np.isnan(growth_order), np.nan, growth_order)
