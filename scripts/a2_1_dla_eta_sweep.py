@@ -4,9 +4,15 @@ Runs DLA simulations for several values of eta and shows the resulting
 cluster shapes side by side.
 """
 
+import shutil
 import numpy as np
 import matplotlib.pyplot as plt
 from pathlib import Path
+import scienceplots  # noqa: F401 (registers styles on import)
+
+styles = ["science"] if shutil.which("latex") else ["science", "no-latex"]
+plt.style.use(styles)
+plt.rcParams.update({"font.size": 14})
 
 from scicomp3.core.grid import Grid2D
 from scicomp3.pde.diffusion import apply_diffusion_bc
@@ -81,15 +87,17 @@ for ax, (eta, growth_order, _) in zip(axes, results):
         vmax=N_STEPS,
     )
     n_sites = np.count_nonzero(~np.isnan(growth_order))
-    ax.set_title(f"$\\eta={eta}$  ({n_sites} sites)")
-    ax.set_xlabel("$x$")
-    ax.set_ylabel("$y$")
+    ax.set_title(f"$\\eta={eta}$  ({n_sites} sites)", fontsize=16)
+    ax.set_xlabel("$x$", fontsize=16)
+    ax.set_ylabel("$y$", fontsize=16)
     ax.set_aspect("equal")
 
-fig.colorbar(im, ax=axes, label="Growth step", fraction=0.02, pad=0.04)
+cbar = fig.colorbar(im, ax=axes[0], location="top", fraction=0.05, pad=0.12)
+cbar.set_label("Growth step", fontsize=14)
+cbar.ax.tick_params(labelsize=12)
 fig.suptitle(
-    f"DLA cluster shape vs $\\eta$ — {N_STEPS} steps on {N}$\\times${N} grid",
-    fontsize=14,
+    f"DLA cluster shape vs $\\eta$\n{N_STEPS} steps on {N}$\\times${N} grid",
+    fontsize=18,
 )
 # Save
 out_dir = Path(__file__).parent.parent / "images" / "figures"
