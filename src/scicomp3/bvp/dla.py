@@ -15,6 +15,7 @@ def grow_dla_sor(n_iter_growth,
                  tol=1e-5,
                  max_iter_sor=100_000,
                  post_step=None,
+                 post_growth=None,
                  **kwargs) -> DLASORResult:
     """
     Simulate Diffusion Limited Aggregation (DLA) using the diffusion equation.
@@ -35,6 +36,8 @@ def grow_dla_sor(n_iter_growth,
             (default: 100,000).
         post_step: Optional callback f(k, y) -> y applied after each SOR
             iteration, e.g. to enforce boundary conditions.
+        post_growth: Optional callback f(step, y, growth_mask) called after
+            each growth step, e.g. to capture snapshots for animation.
         **kwargs: Additional arguments passed to solve_bvp.
 
     Returns:
@@ -43,7 +46,7 @@ def grow_dla_sor(n_iter_growth,
     y = y0.copy()
     N = len(y) - 1
     growth_step, growth_mask = make_growth_step(growth_seed, eta, N)
-    for _ in range(n_iter_growth):
+    for step in range(1, n_iter_growth + 1):
         result = solve_bvp(
             y0=y,
             method="sor",
@@ -56,6 +59,14 @@ def grow_dla_sor(n_iter_growth,
         )
         y = result.y
 
-        growth_mask = growth_step(y)
+        try:
+            growth_mask = growth_step(y)
+        except ValueError:
+            print(f"Growth stopped at step {step}: no viable candidates")
+            break
+
+        if post_growth is not None:
+            post_growth(step, y, growth_mask)
+
     return DLASORResult(y, growth_mask)
 
