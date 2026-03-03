@@ -27,13 +27,7 @@ c0 = np.zeros(grid.shape)
 apply_diffusion_bc(c0)
 
 # Run DLA by SOR
-result = grow_dla_sor(n_iter,
-             seed,
-             eta,
-             c0,
-             omega,
-             tol,
-             post_step=fixed_bc)
+result = grow_dla_sor(n_iter, seed, eta, c0, omega, tol, post_step=fixed_bc)
 
 # Save directory
 out_dir = Path(__file__).parent.parent / "images" / "figures"
