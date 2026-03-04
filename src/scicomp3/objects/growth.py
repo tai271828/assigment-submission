@@ -8,7 +8,7 @@ internally by the closure returned by make_growth_step.
 import numpy as np
 
 
-def _get_neighbours(N, i, j):
+def get_neighbours(N, i, j):
     """
     Helper function.
     Returns coordinates of the four neighbours of the given point (i,j)
@@ -46,7 +46,7 @@ def make_growth_step(
     # Set up initial conditions
     growth_mask = np.zeros(shape=(N + 1, N + 1), dtype=bool)
     growth_mask[*growth_seed] = True
-    candidates = [c for c in _get_neighbours(N, *growth_seed) if not growth_mask[*c]]
+    candidates = [c for c in get_neighbours(N, *growth_seed) if not growth_mask[*c]]
 
     # Define growth step
     def growth_step(y, **kwargs):
@@ -73,7 +73,7 @@ def make_growth_step(
 
         # Update candidates
         candidates.remove(winner)
-        for new_candidate in _get_neighbours(N, *winner):
+        for new_candidate in get_neighbours(N, *winner):
             if not growth_mask[*new_candidate]:
                 candidates.append(new_candidate)
         return growth_mask
