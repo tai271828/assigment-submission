@@ -1,22 +1,29 @@
 """
-This file contains the implementation of the Diffusion Limited Aggregation
-obtained via the diffusion equation
+This file contains implementations of the Diffusion Limited Aggregation (DLA)
+- grow_dla_sor uses the SOR to implement DLA
+- grow_dla_mc uses Monte Carlo to implement DLA
 """
 
 from .solver import solve_bvp
 from ..objects.growth import make_growth_step
-from ..core.result import DLASORResult
+from ..core.result import DLASORResult, DLAMCResult
+from ..objects.walker import make_mc_growth_step
 
-def grow_dla_sor(n_iter_growth,
-                 growth_seed,
-                 eta,
-                 y0,
-                 omega=1.9,
-                 tol=1e-5,
-                 max_iter_sor=100_000,
-                 post_step=None,
-                 post_growth=None,
-                 **kwargs) -> DLASORResult:
+import numpy as np
+
+
+def grow_dla_sor(
+    n_iter_growth,
+    growth_seed,
+    eta,
+    y0,
+    omega=1.9,
+    tol=1e-5,
+    max_iter_sor=100_000,
+    post_step=None,
+    post_growth=None,
+    **kwargs,
+) -> DLASORResult:
     """
     Simulate Diffusion Limited Aggregation (DLA) using the diffusion equation.
 
@@ -55,7 +62,7 @@ def grow_dla_sor(n_iter_growth,
             post_step=post_step,
             sink_mask=growth_mask,
             omega=omega,
-            **kwargs
+            **kwargs,
         )
         y = result.y
 
@@ -70,3 +77,40 @@ def grow_dla_sor(n_iter_growth,
 
     return DLASORResult(y, growth_mask)
 
+
+def grow_dla_mc(
+    n_walking_steps: int,
+    growth_seed: tuple[int, int],
+    N: int,
+    sticking_probability: float = 1.0,
+    post_growth: callable = None,
+) -> DLAMCResult:
+    """
+    Simulate Diffusion Limited Aggregation (DLA) using Monte Carlo random walkers.
+
+    Args:
+        n_walking_steps: Number of steps to simulate the random walkers.
+        growth_seed: (i, j) coordinates of the initial growth point.
+        N: grid size
+        sticking_probability: Probability that a walker sticks to the cluster on contact,
+            in [0, 1]
+        post_growth: Optional callback f(step, walker_mask, growth_mask, candidates)
+            called after each growth step, e.g. to capture snapshots for animation.
+
+    Returns:
+        DLAMCResult: Only contains the final state.
+            Use post_growth to capture intermediate states
+    """
+    mc_step = make_mc_growth_step(growth_seed, N, sticking_probability)
+
+    # Generate random spawn columns for the walkers
+    random_columns = np.random.randint(0, N + 1, n_walking_steps)
+
+    # Run simulation
+    for k, col in enumerate(random_columns):
+        walker_mask, growth_mask, candidates = mc_step(col)
+
+        if post_growth is not None:
+            post_growth(k + 1, walker_mask, growth_mask, candidates)
+
+    return DLAMCResult(walker_mask, growth_mask)
