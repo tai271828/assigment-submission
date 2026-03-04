@@ -45,6 +45,10 @@ def make_mc_growth_step(
         mc_growth_step: A function with signature
             mc_growth_step(spawn_column) -> (walkers_mask, growth_mask, candidates)
     """
+    if sticking_probability != 1:
+        # TODO Implement sticking probabilities
+        raise NotImplementedError
+
     # Set up initial conditions
     walkers_mask = np.zeros(shape=(N + 1, N + 1), dtype=int)
     growth_mask = np.zeros(shape=(N + 1, N + 1), dtype=bool)
