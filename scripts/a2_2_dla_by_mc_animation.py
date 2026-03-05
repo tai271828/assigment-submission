@@ -14,7 +14,7 @@ from matplotlib.animation import FuncAnimation
 from pathlib import Path
 
 from scicomp3.core.grid import Grid2D
-from scicomp3.bvp.dla import grow_dla_mc
+from scicomp3.models.dla_by_mc import grow_dla_mc
 
 import scienceplots  # noqa: F401
 

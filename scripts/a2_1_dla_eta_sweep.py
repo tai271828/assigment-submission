@@ -8,16 +8,17 @@ import shutil
 import numpy as np
 import matplotlib.pyplot as plt
 from pathlib import Path
+
+from scicomp3.core.grid import Grid2D
+from scicomp3.pde.diffusion import apply_diffusion_bc
+from scicomp3.models.dla_by_sor import grow_dla_sor
+from scicomp3.bvp.omega import get_optimal_omega
+
 import scienceplots  # noqa: F401 (registers styles on import)
 
 styles = ["science"] if shutil.which("latex") else ["science", "no-latex"]
 plt.style.use(styles)
 plt.rcParams.update({"font.size": 14})
-
-from scicomp3.core.grid import Grid2D
-from scicomp3.pde.diffusion import apply_diffusion_bc
-from scicomp3.bvp.dla import grow_dla_sor
-from scicomp3.bvp.omega import get_optimal_omega
 
 
 def fixed_bc(k, y):
@@ -53,6 +54,7 @@ for eta in ETAS:
         def track_growth(step, y, growth_mask):
             new_sites = growth_mask & np.isnan(go)
             go[new_sites] = step
+
         return track_growth
 
     result = grow_dla_sor(

@@ -13,6 +13,11 @@ import matplotlib.pyplot as plt
 from matplotlib.animation import FuncAnimation
 from pathlib import Path
 
+from scicomp3.core.grid import Grid2D
+from scicomp3.pde.diffusion import apply_diffusion_bc
+from scicomp3.models.dla_by_sor import grow_dla_sor
+from scicomp3.bvp.omega import get_optimal_omega
+
 import scienceplots  # noqa: F401
 
 styles = (
@@ -21,11 +26,6 @@ styles = (
     else ["science", "no-latex"]
 )
 plt.style.use(styles)
-
-from scicomp3.core.grid import Grid2D
-from scicomp3.pde.diffusion import apply_diffusion_bc
-from scicomp3.bvp.dla import grow_dla_sor
-from scicomp3.bvp.omega import get_optimal_omega
 
 
 def fixed_bc(k, y):
