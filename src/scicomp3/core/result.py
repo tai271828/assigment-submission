@@ -17,11 +17,13 @@ class ODEResult:
         message: Description of termination
         nfev: Number of function evaluations
     """
+
     t: np.ndarray
     y: np.ndarray
     success: bool = True
     message: str = ""
     nfev: int = 0
+
 
 @dataclass
 class BVPResult:
@@ -33,10 +35,12 @@ class BVPResult:
         n_iter: Number of iterations performed
         delta_history: Convergence measure delta at each iteration
     """
+
     y: np.ndarray
     converged: bool = True
     n_iter: int = 0
     delta_history: np.ndarray = None
+
 
 @dataclass
 class DLASORResult:
@@ -46,7 +50,20 @@ class DLASORResult:
         y: Final solution array
         growth_mask: Final mask array marking the grown aggregate
     """
+
     y: np.ndarray
+    growth_mask: np.ndarray
+
+
+@dataclass
+class DLAMCResult:
+    """Container for DLA results by MC (Monte Carlo).
+
+    Attributes:
+        growth_mask: Final mask array marking the grown aggregate
+    """
+
+    walkers_mask: np.ndarray
     growth_mask: np.ndarray
 
 
