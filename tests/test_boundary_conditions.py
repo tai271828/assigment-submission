@@ -10,12 +10,12 @@ import numpy as np
 import pytest
 
 from scicomp3 import Grid1D, solve_ivp, wave1d_rhs
+from scicomp3.core.result import ODEResult, find_y
 from scicomp3.pde.wave import (
     initial_condition_case_i,
     initial_condition_case_ii,
     initial_condition_case_iii,
 )
-from scicomp3.validation.validation import validate_boundary_conditions
 
 
 def fixed_ends(t, y):
@@ -41,6 +41,31 @@ test_cases = [
     ("Case ii", initial_condition_case_ii),
     ("Case iii", initial_condition_case_iii),
 ]
+
+
+def is_zero_at_the_x_ends(result: ODEResult, t):
+    """
+    Checks whether the result evaluates at zero for the given t at the x-boundaries"""
+    simulated_array = find_y(result, t)
+    zero_at_x_start = simulated_array[0][0] == 0
+    zero_at_x_end = simulated_array[-1][0] == 0
+
+    return zero_at_x_start and zero_at_x_end
+
+
+def validate_boundary_conditions(
+    result: ODEResult, validate_function=is_zero_at_the_x_ends, verbose=False
+):
+    """
+    Validates the boundary conditions on the full t domain.
+    The validate_function should be of the form func(result, t)
+    """
+    for t in result.t:
+        assert validate_function(
+            result, t
+        ), f"The function does not evaluate to zero at t={t} at (one of) the x-boundaries"
+    if verbose:
+        print("The boundary conditions were succesfully validated")
 
 
 def run_simulation(ic_func):
