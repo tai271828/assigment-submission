@@ -17,7 +17,7 @@ import pytest
 
 from scicomp3.core.grid import Grid2D
 from scicomp3.pde.diffusion import apply_diffusion_bc
-from scicomp3.bvp.dla import grow_dla_sor
+from scicomp3.models.dla_by_sor import grow_dla_sor
 from scicomp3.bvp.omega import get_optimal_omega
 
 # -- Reduced parameters for CI speed ------------------------------------------
