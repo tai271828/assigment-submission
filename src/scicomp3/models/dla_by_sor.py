@@ -91,6 +91,7 @@ def grow_dla_sor(
     max_iter_sor=100_000,
     post_step=None,
     post_growth=None,
+    method="sor",
     **kwargs,
 ) -> DLASORResult:
     """
@@ -125,7 +126,7 @@ def grow_dla_sor(
     for step in range(1, n_iter_growth + 1):
         result = solve_bvp(
             y0=y,
-            method="sor",
+            method=method,
             tol=tol,
             max_iter=max_iter_sor,
             post_step=post_step,

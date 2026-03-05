@@ -150,6 +150,25 @@ def make_gauss_seidel_step(is_insulator, is_sink, **kwargs):
         return gauss_seidel_step
 
 
+def _sor_kernel(y, is_sink, omega):
+    """SOR inner loop (no insulator case).
+
+    Sweeps rows: incrementing i for fixed j, with periodic x boundary.
+    Updates y in place.
+    """
+    n_i, n_j = y.shape
+    for j in range(1, n_j - 1):
+        for i in range(n_i):
+            if is_sink[i, j]:
+                continue
+            i_plus = (i + 1) % n_i
+            i_minus = (i - 1) % n_i
+            y[i, j] = (
+                omega * 0.25 * (y[i_plus, j] + y[i_minus, j] + y[i, j + 1] + y[i, j - 1])
+                + (1 - omega) * y[i, j]
+            )
+
+
 def make_sor_step(is_insulator, is_sink, omega: float, **kwargs):
     """Return a Successive Over-Relaxation (SOR) iteration step function.
 
@@ -207,21 +226,18 @@ def make_sor_step(is_insulator, is_sink, omega: float, **kwargs):
         return sor_step_with_insulator
     else:
         def sor_step(y, **kwargs):
-            n_i, n_j = y.shape
-            for j in range(1, n_j - 1):        # interior y-points
-                for i in range(n_i):            # all x-points (periodic)
-                    if is_sink[i, j]:
-                        continue
-                    i_plus = (i + 1) % n_i
-                    i_minus = (i - 1) % n_i
-                    y[i, j] = omega * 0.25 * (y[i_plus, j] + y[i_minus, j] +
-                                            y[i, j + 1] + y[i, j - 1]) \
-                            + (1 - omega) * y[i, j]
+            _sor_kernel(y, is_sink, omega)
             return y
         return sor_step
 
 METHODS = {
     "jacobi": make_jacobi_step,
     "gauss_seidel": make_gauss_seidel_step,
-    "sor": make_sor_step
+    "sor": make_sor_step,
 }
+
+try:
+    from .methods_numba import make_sor_numba_step
+    METHODS["sor_numba"] = make_sor_numba_step
+except ImportError:
+    pass
