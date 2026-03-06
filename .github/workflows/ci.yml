@@ -19,6 +19,12 @@ jobs:
       - name: Install package with test dependencies
         run: pip install -e ".[dev]"
 
+      - name: Compile C benchmark artifacts
+        run: |
+          cd contrib
+          gcc -O2 -shared -fPIC -o sor_kernels.so sor_kernels.c
+          gcc -O2 -o sor_benchmark sor_benchmark.c sor_kernels.so -Wl,-rpath,'$ORIGIN'
+
       - name: Smoke test (quick import check)
         run: python -c "from scicomp3 import solve_ivp, wave1d_rhs; print('Import OK')"
 
