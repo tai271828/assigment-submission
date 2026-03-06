@@ -169,6 +169,52 @@ def _sor_kernel(y, is_sink, omega):
             )
 
 
+def _sor_redblack_kernel(y, is_sink, omega):
+    """Red-black SOR inner loop (no insulator case).
+
+    Splits the grid into two independent sets using checkerboard coloring:
+    red points ((i+j) even) and black points ((i+j) odd). Each color's
+    sweep only reads from the other color, so within a sweep all updates
+    are independent and parallelizable.
+
+    Updates y in place.
+    """
+    n_i, n_j = y.shape
+    for color in range(2):
+        for j in range(1, n_j - 1):
+            for i in range(n_i):
+                if (i + j) % 2 != color:
+                    continue
+                if is_sink[i, j]:
+                    continue
+                i_plus = (i + 1) % n_i
+                i_minus = (i - 1) % n_i
+                y[i, j] = (
+                    omega * 0.25 * (y[i_plus, j] + y[i_minus, j] + y[i, j + 1] + y[i, j - 1])
+                    + (1 - omega) * y[i, j]
+                )
+
+
+def make_sor_redblack_step(is_insulator, is_sink, omega: float, **kwargs):
+    """Return a red-black SOR step function.
+
+    Same convergence properties as standard SOR, but the update order
+    (checkerboard coloring) makes each half-sweep embarrassingly parallel.
+    Falls back to pure-Python standard SOR if insulators are present.
+    """
+    if not (0 <= omega <= 2):
+        raise ValueError(f"omega must be in [0, 2], got {omega:.2f}")
+
+    if np.any(is_insulator):
+        return make_sor_step(is_insulator, is_sink, omega)
+
+    def sor_redblack_step(y, **kwargs):
+        _sor_redblack_kernel(y, is_sink, omega)
+        return y
+
+    return sor_redblack_step
+
+
 def make_sor_step(is_insulator, is_sink, omega: float, **kwargs):
     """Return a Successive Over-Relaxation (SOR) iteration step function.
 
@@ -234,10 +280,12 @@ METHODS = {
     "jacobi": make_jacobi_step,
     "gauss_seidel": make_gauss_seidel_step,
     "sor": make_sor_step,
+    "sor_redblack": make_sor_redblack_step,
 }
 
 try:
-    from .methods_numba import make_sor_numba_step
+    from .methods_numba import make_sor_numba_step, make_sor_numba_redblack_step
     METHODS["sor_numba"] = make_sor_numba_step
+    METHODS["sor_numba_redblack"] = make_sor_numba_redblack_step
 except ImportError:
     pass
