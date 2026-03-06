@@ -8,11 +8,11 @@ to the cluster with probability sticking_probability. Walkers that step out
 of the top or bottom boundary are respawned at a random column in the top row.
 
 The main entry point is grow_dla_mc, which runs the full simulation and
-returns the final state as a DLAMCResult. Intermediate states can be
+returns the final state as a DLAMCResultLegacy. Intermediate states can be
 captured via the post_growth callback.
 """
 
-from ..core.result import DLAMCResult
+from ..core.result import DLAMCResultLegacy
 from ..core.grid import get_neighbours
 
 import numpy as np
@@ -124,7 +124,7 @@ def grow_dla_mc(
     N: int,
     sticking_probability: float = 1.0,
     post_growth: callable = None,
-) -> DLAMCResult:
+) -> DLAMCResultLegacy:
     """
     Simulate Diffusion Limited Aggregation (DLA) using Monte Carlo random walkers.
 
@@ -138,7 +138,7 @@ def grow_dla_mc(
             called after each growth step, e.g. to capture snapshots for animation.
 
     Returns:
-        DLAMCResult: Only contains the final state.
+        DLAMCResultLegacy: Only contains the final state.
             Use post_growth to capture intermediate states
     """
     mc_step = _make_mc_growth_step(growth_seed, N, sticking_probability)
@@ -153,4 +153,4 @@ def grow_dla_mc(
         if post_growth is not None:
             post_growth(k + 1, walker_mask, growth_mask, candidates)
 
-    return DLAMCResult(walker_mask, growth_mask)
+    return DLAMCResultLegacy(walker_mask, growth_mask)
