@@ -1,4 +1,5 @@
 """
+[LEGACY]
 Monte Carlo DLA via random walkers.
 
 Walkers spawn at the top row and perform a random walk on an N+1 x N+1 grid.

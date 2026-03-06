@@ -14,7 +14,7 @@ from matplotlib.animation import FuncAnimation
 from pathlib import Path
 
 from scicomp3.core.grid import Grid2D
-from scicomp3.models.dla_by_mc import grow_dla_mc
+from scicomp3.models.dla_by_mc_legacy import grow_dla_mc
 
 import scienceplots  # noqa: F401
 
@@ -141,7 +141,7 @@ anim = FuncAnimation(
 # Save as GIF
 out_dir = Path(__file__).parent.parent / "images" / "gifs"
 out_dir.mkdir(parents=True, exist_ok=True)
-gif_path = out_dir / "a2_2_dla_by_mc.gif"
+gif_path = out_dir / "a2_2_dla_by_mc_legacy.gif"
 print(f"Saving animation ({len(frames)} frames)...")
 anim.save(gif_path, writer="pillow", fps=30, dpi=100)
 print(f"Saved → {gif_path}")
