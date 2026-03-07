@@ -63,6 +63,18 @@ class DLAMCResult:
         growth_mask: Final mask array marking the grown aggregate
     """
 
+    growth_mask: np.ndarray
+
+
+@dataclass
+class DLAMCResultLegacy:
+    """Legacy ontainer for DLA results by MC (Monte Carlo).
+
+    Attributes:
+        walkers_mask: Final grid with walkers
+        growth_mask: Final mask array marking the grown aggregate
+    """
+
     walkers_mask: np.ndarray
     growth_mask: np.ndarray
 
