@@ -24,7 +24,7 @@ import matplotlib as mpl
 import scienceplots
 import shutil
 
-mpl.use("TkAgg")
+# mpl.use("TkAgg")
 plt.rcParams.update({"font.size": 13})
 mpl.rcParams["xtick.labelsize"] = 10
 mpl.rcParams["ytick.labelsize"] = 10
