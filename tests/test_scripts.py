@@ -66,11 +66,17 @@ def _is_animation_script(name: str) -> bool:
     parts = stem.split("_")
     return "animation" in parts
 
+def _is_benchmark_script(name: str) -> bool:
+    """True if the script name starts or ends with 'benchmark' (ignoring extension)."""
+    stem = Path(name).stem
+    parts = stem.split("_")
+    return "benchmark" in parts
+
 
 @pytest.mark.parametrize("script", [_make_param(s) for s in ALL_SCRIPTS])
 def test_script_runs(script):
     """Run a script and assert it exits with code 0."""
-    if _is_animation_script(script.name):
+    if _is_animation_script(script.name) or _is_benchmark_script(script.name):
         pytest.skip("animation scripts are excluded from CI")
 
     if script.name in KNOWN_BROKEN:

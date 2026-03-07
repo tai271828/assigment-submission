@@ -31,7 +31,9 @@ print(f"DLA: N={N}, n_steps={N_STEPS}, η={ETA}, ω={OMEGA:.4f}")
 # -- Run DLA simulation -----------------------------------------------------
 np.random.seed(SEED)
 
-c0 = np.zeros(grid.shape)
+# Initialise with the analytical linear gradient c(y) = y/L
+# (the exact solution for the empty system); BCs are then already satisfied.
+c0 = grid.Y / grid.L
 apply_diffusion_bc(c0)
 
 # Track growth order via callback
