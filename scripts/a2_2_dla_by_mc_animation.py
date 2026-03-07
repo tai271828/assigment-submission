@@ -1,10 +1,8 @@
 """DLA growth animation via MC (Assignment 2.2).
 
-Runs a MC-based DLA simulation step by step and animates:
-  - Left:  the growing cluster coloured by growth order.
-  - Right: the grid with random walkers
-
-The animation is saved as a GIF and also displayed interactively.
+Runs a MC-based DLA simulation step by step and animates the growing
+cluster coloured by growth order. The animation is saved as a GIF
+and also displayed interactively.
 """
 
 import shutil
@@ -47,8 +45,7 @@ frames = [growth_order.copy()]
 
 
 def capture_growth(step, growth_mask, candidates):
-    """Record growth order and walkers location after each growth step."""
-    # Detect newly added site
+    """Record growth order after each growth step."""
     new_sites = growth_mask & np.isnan(growth_order)
     growth_order[new_sites] = step
     frames.append(growth_order.copy())
@@ -64,23 +61,20 @@ print(f"Done. Cluster size: {n_cluster} sites, {len(frames)} frames")
 # -- Build animation --------------------------------------------------------
 fig, ax = plt.subplots(1, 1, figsize=(6, 5))
 
-# Left: cluster coloured by growth order
-ax_cluster = ax
-cluster_display = np.where(np.isnan(frames[0]), np.nan, frames[0])
-im_cluster = ax_cluster.pcolormesh(
+im = ax.pcolormesh(
     grid.X,
     grid.Y,
-    cluster_display,
+    np.where(np.isnan(frames[0]), np.nan, frames[0]),
     shading="nearest",
     cmap="plasma",
     vmin=0,
     vmax=N_STEPS,
 )
-fig.colorbar(im_cluster, ax=ax_cluster, label="Growth step")
-ax_cluster.set_xlabel("$x$")
-ax_cluster.set_ylabel("$y$")
-ax_cluster.set_aspect("equal")
-title_cluster = ax_cluster.set_title(f"DLA cluster ($p_s={STICKING_PROB}$) — step 0")
+fig.colorbar(im, ax=ax, label="Growth step")
+ax.set_xlabel("$x$")
+ax.set_ylabel("$y$")
+ax.set_aspect("equal")
+title = ax.set_title(f"DLA cluster ($p_s={STICKING_PROB}$) — step 0")
 
 fig.suptitle(f"MC-based DLA on a {N}$\\times${N} grid", fontsize=14)
 plt.tight_layout()
@@ -89,14 +83,11 @@ plt.tight_layout()
 def update(frame_idx):
     g_order = frames[frame_idx]
     n_sites = np.count_nonzero(~np.isnan(g_order))
-
-    cluster_display = np.where(np.isnan(g_order), np.nan, g_order)
-    im_cluster.set_array(cluster_display.ravel())
-    title_cluster.set_text(
+    im.set_array(np.where(np.isnan(g_order), np.nan, g_order).ravel())
+    title.set_text(
         f"DLA cluster ($p_s={STICKING_PROB}$) — step {frame_idx}, {n_sites} sites"
     )
-
-    return im_cluster, title_cluster
+    return im, title
 
 
 anim = FuncAnimation(
