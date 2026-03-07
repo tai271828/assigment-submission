@@ -79,7 +79,7 @@ def _make_mc_growth_step(
 
         # Pick a random neighbour
         random_index = np.random.randint(0, len(valid_neighbours))
-        new_coords = valid_neighbours[random_index]
+        new_coords = tuple(valid_neighbours[random_index])
 
         # Respawn walker if beyond top or bottom boundary
         if new_coords == (i, j):
