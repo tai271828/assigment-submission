@@ -1,0 +1,125 @@
+"""
+Comparison of DLA cluster statistics for SOR vs Monte Carlo — data generation.
+
+Runs batches of DLA simulations for both methods across a range of parameter
+values and saves the results to a .pkl file for plotting.
+
+SOR simulations are run for each value of eta in ETAS. MC simulations are
+run for each sticking probability in STICKING_PROBABILITIES. Each
+configuration is repeated BATCH_SIZE times to estimate variability.
+
+Cluster statistics computed per run: highest point, broadness, fractal dimension.
+
+Output: data/dla_sor_vs_mc.pkl
+"""
+
+import numpy as np
+from joblib import dump
+from pathlib import Path
+
+from scicomp3.models.dla_by_mc import grow_dla_mc
+from scicomp3.models.dla_by_sor import grow_dla_sor
+from scicomp3.bvp.omega import get_optimal_omega
+from scicomp3.core.grid import Grid2D
+from scicomp3.pde.diffusion import apply_diffusion_bc
+from scicomp3.analysis.cluster import compute_cluster_stats
+
+
+def fixed_bc(k, y):
+    """Enforce diffusion BCs after each iteration."""
+    apply_diffusion_bc(y)
+    return y
+
+
+# -- Parameters --------------------------------------------------------------
+N = 50
+N_STEPS = 100
+ETAS = [0.1, 0.3, 0.5, 0.7, 1.0, 2.0, 4.0]
+STICKING_PROBABILITIES = [0.1, 0.3, 0.5, 0.7, 1.0]
+SEED = 42
+OMEGA = get_optimal_omega(N)
+TOL = 1e-4
+MAX_ITER_SOR = 2_000
+MAX_ITER_MC = 10_000
+BATCH_SIZE = 20
+
+grid = Grid2D(N=N, L=1.0)
+growth_seed = (N // 2, N // 2)
+
+NUMBER_OF_STATS = 3
+batch_shape = (BATCH_SIZE, NUMBER_OF_STATS)
+sor_batches = {}
+mc_batches = {}
+
+n_sor_runs = len(ETAS) * BATCH_SIZE
+n_mc_runs = len(STICKING_PROBABILITIES) * BATCH_SIZE
+print(f"Running {n_sor_runs} SOR simulations and {n_mc_runs} MC simulations")
+print(f"Parameters: N={N}, n_steps={N_STEPS}, batch_size={BATCH_SIZE}\n")
+
+np.random.seed(SEED)
+
+# Run DLA by SOR
+c0 = np.zeros(grid.shape)
+apply_diffusion_bc(c0)
+for eta in ETAS:
+    print(f"SOR | eta={eta} ({'ETAS.index(eta)+1'}/{len(ETAS)})")
+    dla_sor_batch = np.empty(shape=batch_shape)
+    for i in range(BATCH_SIZE):
+        print(f"  run {i+1}/{BATCH_SIZE} ...", end=" ", flush=True)
+        result = grow_dla_sor(
+            n_iter_growth=N_STEPS,
+            growth_seed=growth_seed,
+            eta=eta,
+            y0=c0,
+            omega=OMEGA,
+            tol=TOL,
+            max_iter_sor=MAX_ITER_SOR,
+            post_step=fixed_bc,
+            method="sor_numba",
+        )
+        cluster_stats = compute_cluster_stats(result.growth_mask)
+        dla_sor_batch[i, 0] = cluster_stats.highest_point
+        dla_sor_batch[i, 1] = cluster_stats.broadness
+        dla_sor_batch[i, 2] = cluster_stats.fractal_dimension
+        print(f"done (fractal_dim={cluster_stats.fractal_dimension:.3f})")
+    sor_batches[eta] = dla_sor_batch
+
+# Run DLA by Monte Carlo
+for p in STICKING_PROBABILITIES:
+    print(
+        f"\nMC | p_s={p} ({STICKING_PROBABILITIES.index(p)+1}/{len(STICKING_PROBABILITIES)})"
+    )
+    dla_mc_batch = np.empty(shape=batch_shape)
+
+    for i in range(BATCH_SIZE):
+        print(f"  run {i+1}/{BATCH_SIZE} ...", end=" ", flush=True)
+        result = grow_dla_mc(
+            n_iter_growth=N_STEPS,
+            growth_seed=growth_seed,
+            N=N,
+            sticking_probability=p,
+            max_walker_steps=MAX_ITER_MC,
+        )
+        cluster_stats = compute_cluster_stats(result.growth_mask)
+        dla_mc_batch[i, 0] = cluster_stats.highest_point
+        dla_mc_batch[i, 1] = cluster_stats.broadness
+        dla_mc_batch[i, 2] = cluster_stats.fractal_dimension
+        print(f"done (fractal_dim={cluster_stats.fractal_dimension:.3f})")
+    mc_batches[p] = dla_mc_batch
+
+# Save data to file
+results = {
+    "sor_batches": sor_batches,
+    "mc_batches": mc_batches,
+    "etas": ETAS,
+    "sticking_probabilities": STICKING_PROBABILITIES,
+    "N": N,
+    "n_steps": N_STEPS,
+    "batch_size": BATCH_SIZE,
+}
+
+out_dir = Path(__file__).parent.parent / "data"
+out_dir.mkdir(parents=True, exist_ok=True)
+filename = "dla_sor_vs_mc.pkl"
+print(f"\nSaving results to {out_dir / filename}")
+dump(results, out_dir / filename)

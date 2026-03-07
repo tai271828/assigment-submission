@@ -1,0 +1,97 @@
+"""
+Comparison of DLA cluster statistics for SOR vs Monte Carlo — plotting.
+
+Loads precomputed simulation data from data/dla_sor_vs_mc.pkl and produces
+a figure with three subplots, one per cluster statistic (highest point,
+broadness, fractal dimension). Each subplot shows SOR results as a function
+of eta and MC results as a function of sticking probability, with error bars
+showing the standard deviation across the batch.
+
+Input:  data/dla_sor_vs_mc.pkl
+Output: images/figures/dla_sor_vs_mc.png
+"""
+
+import shutil
+import matplotlib.pyplot as plt
+from joblib import load
+from pathlib import Path
+
+import scienceplots  # noqa: F401
+
+styles = (
+    ["science"]
+    if (shutil.which("latex") and shutil.which("dvipng"))
+    else ["science", "no-latex"]
+)
+plt.style.use(styles)
+
+
+# Load data
+data_dir = Path(__file__).parent.parent / "data"
+filename = "dla_sor_vs_mc.pkl"
+results = load(data_dir / filename)
+
+sor_batches = results["sor_batches"]
+mc_batches = results["mc_batches"]
+etas = results["etas"]
+sticking_probabilities = results["sticking_probabilities"]
+N = results["N"]
+n_steps = results["n_steps"]
+batch_size = results["batch_size"]
+
+# Create the plot
+COLOUR_SOR = "tab:green"
+COLOUR_MC = "tab:blue"
+
+STAT_NAMES = ["Highest point", "Broadness", "Fractal dimension"]
+N_STATS = len(STAT_NAMES)
+
+fig, axes = plt.subplots(1, N_STATS, figsize=(12, 4))
+
+for stat_idx, (ax, stat_name) in enumerate(zip(axes, STAT_NAMES)):
+    # Plot SOR results vs eta
+    sor_means = [sor_batches[eta][:, stat_idx].mean() for eta in etas]
+    sor_stds = [sor_batches[eta][:, stat_idx].std() for eta in etas]
+    ax.errorbar(
+        etas, sor_means, yerr=sor_stds, marker="o", label="SOR", color=COLOUR_SOR
+    )
+
+    # Plot MC results vs sticking probability (separate x-axis not possible,
+    # so we use a twin axis)
+    ax2 = ax.twiny()
+    mc_means = [mc_batches[p][:, stat_idx].mean() for p in sticking_probabilities]
+    mc_stds = [mc_batches[p][:, stat_idx].std() for p in sticking_probabilities]
+    ax2.errorbar(
+        sticking_probabilities,
+        mc_means,
+        yerr=mc_stds,
+        marker="s",
+        label="MC",
+        color=COLOUR_MC,
+        linestyle="--",
+    )
+
+    ax.set_xlabel("$\\eta$ (SOR)", color=COLOUR_SOR)
+    ax.tick_params(axis="x", colors=COLOUR_SOR)
+    ax2.set_xlabel("$p_s$ (MC)", color=COLOUR_MC)
+    ax2.tick_params(axis="x", colors=COLOUR_MC)
+    ax.set_title(stat_name)
+
+# Combined legend from both axes
+lines1, labels1 = ax.get_legend_handles_labels()
+lines2, labels2 = ax2.get_legend_handles_labels()
+axes[-1].legend(lines1 + lines2, labels1 + labels2, loc="best")
+
+fig.suptitle(
+    f"DLA cluster statistics: SOR vs MC (N={N}, n_steps={n_steps}, batch={batch_size})",
+    fontsize=12,
+)
+plt.tight_layout()
+
+out_dir = Path(__file__).parent.parent / "images" / "figures"
+out_dir.mkdir(parents=True, exist_ok=True)
+fig_path = out_dir / "dla_sor_vs_mc.png"
+plt.savefig(fig_path, dpi=150)
+print(f"Saved → {fig_path}")
+
+plt.show()
