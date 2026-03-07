@@ -1,11 +1,17 @@
 """
-Comparison of DLA clusters for SOR versus Monte Carlo implementation
+Comparison of DLA cluster statistics for SOR vs Monte Carlo — plotting.
 
-Create plot
+Loads precomputed simulation data from data/dla_sor_vs_mc.pkl and produces
+a figure with three subplots, one per cluster statistic (highest point,
+broadness, fractal dimension). Each subplot shows SOR results as a function
+of eta and MC results as a function of sticking probability, with error bars
+showing the standard deviation across the batch.
+
+Input:  data/dla_sor_vs_mc.pkl
+Output: images/figures/dla_sor_vs_mc.png
 """
 
 import shutil
-import numpy as np
 import matplotlib.pyplot as plt
 from joblib import load
 from pathlib import Path

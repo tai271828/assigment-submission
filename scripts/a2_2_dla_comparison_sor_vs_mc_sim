@@ -1,7 +1,16 @@
 """
-Comparison of DLA clusters for SOR versus Monte Carlo implementation
+Comparison of DLA cluster statistics for SOR vs Monte Carlo — data generation.
 
-Generate Data
+Runs batches of DLA simulations for both methods across a range of parameter
+values and saves the results to a .pkl file for plotting.
+
+SOR simulations are run for each value of eta in ETAS. MC simulations are
+run for each sticking probability in STICKING_PROBABILITIES. Each
+configuration is repeated BATCH_SIZE times to estimate variability.
+
+Cluster statistics computed per run: highest point, broadness, fractal dimension.
+
+Output: data/dla_sor_vs_mc.pkl
 """
 
 import numpy as np
