@@ -309,3 +309,60 @@ class TestDLAEtaSweepSameContent:
         ref_y = reference_data["y"]
         np.testing.assert_allclose(result.y.mean(), ref_y.mean(), rtol=1e-10)
         np.testing.assert_allclose(result.y.std(), ref_y.std(), rtol=1e-10)
+
+
+# -- Tests: sor vs sor_numba numerical consistency ----------------------------
+
+
+class TestSORNumbaConsistency:
+    """Verify that 'sor' and 'sor_numba' produce identical results."""
+
+    @pytest.fixture(scope="class")
+    def sor_result(self):
+        np.random.seed(SEED)
+        c0 = np.zeros((N + 1, N + 1))
+        apply_diffusion_bc(c0)
+        return grow_dla_sor(
+            N_STEPS,
+            GROWTH_SEED,
+            1.0,
+            c0,
+            OMEGA,
+            TOL,
+            max_iter_sor=MAX_ITER,
+            post_step=fixed_bc,
+            method="sor",
+        )
+
+    @pytest.fixture(scope="class")
+    def sor_numba_result(self):
+        np.random.seed(SEED)
+        c0 = np.zeros((N + 1, N + 1))
+        apply_diffusion_bc(c0)
+        return grow_dla_sor(
+            N_STEPS,
+            GROWTH_SEED,
+            1.0,
+            c0,
+            OMEGA,
+            TOL,
+            max_iter_sor=MAX_ITER,
+            post_step=fixed_bc,
+            method="sor_numba",
+        )
+
+    def test_growth_mask_identical(self, sor_result, sor_numba_result):
+        """Both methods must grow the exact same cluster."""
+        np.testing.assert_array_equal(
+            sor_result.growth_mask,
+            sor_numba_result.growth_mask,
+            err_msg="growth_mask differs between sor and sor_numba",
+        )
+
+    def test_concentration_field_identical(self, sor_result, sor_numba_result):
+        """Concentration fields must be bit-identical (same kernel)."""
+        np.testing.assert_array_equal(
+            sor_result.y,
+            sor_numba_result.y,
+            err_msg="Concentration field differs between sor and sor_numba",
+        )

@@ -28,13 +28,13 @@ def fixed_bc(k, y):
 
 
 # -- Parameters --------------------------------------------------------------
-N = 50
+N = 100
 N_STEPS = 100
 SEED = 42
 OMEGA = get_optimal_omega(N)
 TOL = 1e-4
 MAX_ITER = 2_000
-ETAS = [0.5, 1.0, 2.0, 4.0]
+ETAS = [0.0, 0.5, 1.0, 2.0]
 
 grid = Grid2D(N=N, L=1.0)
 growth_seed = (N // 2, N // 2)
@@ -67,6 +67,7 @@ for eta in ETAS:
         max_iter_sor=MAX_ITER,
         post_step=fixed_bc,
         post_growth=make_tracker(growth_order),
+        method="sor_numba",
     )
 
     n_sites = np.count_nonzero(~np.isnan(growth_order))
