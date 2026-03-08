@@ -26,25 +26,29 @@ ALL_SCRIPTS = sorted(SCRIPTS_DIR.glob("*.py"))
 SLOW_SCRIPTS = {
     "a1_1_cases_animation.py",  # generates 3 GIF animations
     "a1_6_convergence.py",  # runs Jacobi + GS + multiple SOR
+    "a2_2_dla_comparison_sor_vs_mc_sim.py",
+    "a2_2_dla_comparison_sor_vs_mc_plot.py",
 }
 
 # Scripts with known pre-existing issues (not caused by this test file).
 # Maps filename -> reason string for xfail.
 KNOWN_BROKEN = {
-    "a1_6_seeking_optimal_omega.py": "Ternary search over omega takes too much time",
     "a1_1_cases_animation.py": "Grid1D size mismatch (N vs N+1) causes shape error in column_stack",
     "a1_1_smoke_test.py": "Hardcodes matplotlib.use('TkAgg') which blocks in headless environments",
     "a1_1_cases_compared_to_analytical.py": "Hardcodes matplotlib.use('TkAgg') which blocks in headless environments",
     "a1_1_cases_plot.py": "Hardcodes matplotlib.use('TkAgg') which blocks in headless environments",
     "a1_2_diffusion.py": "Incorrect image path",
+    "a1_2_diffusion_animation.py": "~197s; diffusion already covered by a1_2_diffusion_verification",
     "a1_6_optimal_omega.py": "Sweeps 39 omega values (including omega~0.05) causing >10min runtime",
+    "a1_6_seeking_optimal_omega.py": "Ternary search over omega takes too much time",
     "a1_6_omega_for_various_N_sim.py": "Simulation sweep over multiple N values exceeds CI timeout",
     "a1_6_omega_values.py": "Omega sweep simulation exceeds CI timeout",
     "a1_6_omega_for_various_N_plot.py": "Requires pre-generated data/n_vs_omega.pkl from simulation script",
-    "a1_2_diffusion_animation.py": "~197s; diffusion already covered by a1_2_diffusion_verification",
     "a1_6_insulators_k_impact.py": "~137s; k-impact sweep duplicates a1_6_insulators_sor coverage",
     "a1_6_insulators_gauss_seidel.py": "~102s; covered by a1_6_iterative_gauss_seidel and unit tests",
     "a1_6_objects_k_impact.py": "~102s; k-impact sweep duplicates a1_6_insulators_sor coverage",
+    "a2_2_dla_comparison_sor_vs_mc_sim.py": "takes too much time and one-off usage",
+    "a2_2_dla_comparison_sor_vs_mc_plot.py": "takes too much time and one-off usage",
 }
 
 
