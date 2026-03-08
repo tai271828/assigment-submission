@@ -71,12 +71,12 @@ print("Warm-up done.\n")
 # (method, c0_mode, omega_value, label)
 cases = [
     ("sor",       "zeros",    OMEGA_OPT, f"sor + zeros + w={OMEGA_OPT:.2f}"),
-    ("sor_numba", "zeros",    OMEGA_OPT, f"numba + zeros + w={OMEGA_OPT:.2f}"),
-    ("sor",       "gradient", OMEGA_OPT, f"sor + grad + w={OMEGA_OPT:.2f}"),
-    ("sor_numba", "gradient", OMEGA_OPT, f"numba + grad + w={OMEGA_OPT:.2f}"),
     ("sor",       "zeros",    OMEGA_GS,  f"sor + zeros + w={OMEGA_GS:.2f}"),
-    ("sor_numba", "zeros",    OMEGA_GS,  f"numba + zeros + w={OMEGA_GS:.2f}"),
+    ("sor",       "gradient", OMEGA_OPT, f"sor + grad + w={OMEGA_OPT:.2f}"),
     ("sor",       "gradient", OMEGA_GS,  f"sor + grad + w={OMEGA_GS:.2f}"),
+    ("sor_numba", "zeros",    OMEGA_OPT, f"numba + zeros + w={OMEGA_OPT:.2f}"),
+    ("sor_numba", "zeros",    OMEGA_GS,  f"numba + zeros + w={OMEGA_GS:.2f}"),
+    ("sor_numba", "gradient", OMEGA_OPT, f"numba + grad + w={OMEGA_OPT:.2f}"),
     ("sor_numba", "gradient", OMEGA_GS,  f"numba + grad + w={OMEGA_GS:.2f}"),
 ]
 
