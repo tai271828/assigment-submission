@@ -34,7 +34,7 @@ SEED = 42
 OMEGA = get_optimal_omega(N)
 TOL = 1e-4
 MAX_ITER = 2_000
-ETAS = [0.0, 0.5, 1.0, 2.0]
+ETAS = [0.0, 0.5, 1.0]
 
 grid = Grid2D(N=N, L=1.0)
 growth_seed = (N // 2, N // 2)
