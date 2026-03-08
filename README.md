@@ -52,7 +52,7 @@ python scripts/a1_1_smoke_test.py
 ├── src/scicomp3/              # Main package
 │   ├── core/
 │   │   ├── grid.py            # Grid1D, Grid2D — spatial discretization
-│   │   └── result.py          # ODEResult, BVPResult, DLASORResult — solver output containers
+│   │   └── result.py          # ODEResult, BVPResult, DLASORResult, DLAMCResult — solver output containers
 │   ├── ode/
 │   │   ├── methods.py         # Time-stepping: Euler, symplectic Euler
 │   │   └── solver.py          # solve_ivp() — IVP solver entry point
@@ -61,16 +61,19 @@ python scripts/a1_1_smoke_test.py
 │   │   └── diffusion.py       # diffusion2d_rhs, BCs, stable dt, analytical solution
 │   ├── bvp/
 │   │   ├── methods.py         # Iterative methods: Jacobi, Gauss-Seidel, SOR
+│   │   ├── methods_numba.py   # Numba JIT-compiled SOR kernel (~100x speedup)
 │   │   ├── solver.py          # solve_bvp() — BVP solver entry point
-│   │   ├── omega.py           # Optimal omega computation and search for SOR
-│   │   └── dla.py             # grow_dla_sor() — DLA simulation via SOR
+│   │   └── omega.py           # Optimal omega computation and search for SOR
 │   ├── objects/
-│   │   ├── shapes.py          # Geometric coordinate generation (rectangles)
-│   │   ├── sink.py            # Sink region utilities
-│   │   ├── insulator.py       # Insulator region utilities
-│   │   └── growth.py          # DLA growth step logic (candidate selection, probabilistic growth)
-│   └── validation/
-│       └── validation.py      # Boundary condition validation utilities
+│   │   ├── shapes.py          # Geometric coordinate generation (rectangles, circles)
+│   │   ├── sink.py            # Sink region utilities (Dirichlet, c=0)
+│   │   └── insulator.py       # Insulator region utilities (Neumann, zero-flux)
+│   ├── models/
+│   │   ├── dla_by_sor.py      # grow_dla_sor() — DLA via steady-state diffusion (SOR)
+│   │   ├── dla_by_mc.py       # grow_dla_mc() — DLA via Monte Carlo random walkers
+│   │   └── gray_scott.py      # Gray-Scott reaction-diffusion model (IMEX Euler, FFT)
+│   └── analysis/
+│       └── cluster.py         # ClusterStats, fractal dimension (box-counting)
 │
 ├── tests/                     # Pytest test suite
 │   ├── test_boundary_conditions.py  # Wave BC enforcement (3 cases)
@@ -81,39 +84,15 @@ python scripts/a1_1_smoke_test.py
 │   ├── test_a2_1.py                # DLA growth correctness + reference comparison
 │   └── test_scripts.py             # Smoke tests for all scripts
 │
-├── scripts/                   # Runnable plotting/animation scripts
-│   ├── a1_1_smoke_test.py                # Quick wave equation smoke test
-│   ├── a1_1_cases_plot.py                # Wave plots for all 3 initial conditions
-│   ├── a1_1_cases_animation.py           # Wave animated GIFs
-│   ├── a1_1_cases_compared_to_analytical.py  # Numerical vs analytical error
-│   ├── a1_2_diffusion.py                # 2D diffusion snapshots
-│   ├── a1_2_diffusion_animation.py       # Diffusion animated GIF
-│   ├── a1_2_diffusion_verification.py    # Diffusion vs analytical verification
-│   ├── a1_6_iterative_methods.py         # Compare Jacobi/GS/SOR profiles + deviations
-│   ├── a1_6_iterative_convergence.py     # Convergence rate comparison
-│   ├── a1_6_iterative_jacobi.py          # Jacobi standalone
-│   ├── a1_6_iterative_gauss_seidel.py    # Gauss-Seidel standalone
-│   ├── a1_6_iterative_sor.py             # SOR standalone
-│   ├── a1_6_objects_k_impact.py          # Object impact on iteration count
-│   ├── a1_6_seeking_optimal_omega.py     # Optimal omega search with objects
-│   ├── a1_6_omega_values.py              # Omega parameter exploration
-│   ├── a1_6_omega_for_various_N_sim.py   # Omega vs grid size simulation
-│   ├── a1_6_omega_for_various_N_plot.py  # Omega vs grid size plotting
-│   ├── a1_6_sinks_jacobi.py             # Sink object with Jacobi
-│   ├── a1_6_sinks_gauss_seidel.py       # Sink object with Gauss-Seidel
-│   ├── a1_6_sinks_sor.py                # Sink object with SOR
-│   ├── a1_6_sinks_sor_animation.py      # Sink SOR animation
-│   ├── a1_6_sinks_k_impact.py           # Sink impact on convergence
-│   ├── a1_6_sinks_and_insulators_sor.py  # Combined sink + insulator
-│   ├── a1_6_insulators_jacobi.py         # Insulator with Jacobi
-│   ├── a1_6_insulators_gauss_seidel.py   # Insulator with Gauss-Seidel
-│   ├── a1_6_insulators_sor.py            # Insulator with SOR
-│   ├── a1_6_insulators_sor_animation.py  # Insulator SOR animation
-│   ├── a1_6_insulators_k_impact.py       # Insulator impact on convergence
-│   ├── a2_1_dla_by_sor.py               # DLA cluster via SOR (static plot)
-│   ├── a2_1_dla_by_sor_animation.py     # DLA growth animation (GIF)
-│   └── a2_1_dla_eta_sweep.py            # DLA cluster shape vs eta
+├── scripts/                   # Runnable plotting/animation/benchmark scripts
+│   ├── a1_1_*.py                   # Wave equation (smoke test, plots, animations, analytical)
+│   ├── a1_2_*.py                   # 2D diffusion (snapshots, animation, verification)
+│   ├── a1_6_*.py                   # Iterative methods, omega, sinks, insulators
+│   ├── a2_1_*.py                   # DLA by SOR (plots, animation, eta sweep, benchmarks)
+│   ├── a2_2_*.py                   # DLA comparison SOR vs MC (plots, animations, sweeps)
+│   └── a2_3_*.py                   # Pattern analysis
 │
+├── contrib/                   # C benchmark code for SOR kernel comparison
 ├── data/                      # Cached simulation data (e.g. n_vs_omega.pkl, DLA references)
 ├── pyproject.toml             # Build config (hatchling), deps, pytest settings
 └── images/                    # Generated figures and GIFs
@@ -225,6 +204,7 @@ result = solve_bvp(c0, method="sor", post_step=fixed_bc, tol=1e-5,
 | `"jacobi"` | Jacobi iteration — vectorized with `np.roll` |
 | `"gauss_seidel"` | Gauss-Seidel — sequential updates using latest values |
 | `"sor"` | Successive Over-Relaxation — accelerated Gauss-Seidel with relaxation parameter omega |
+| `"sor_numba"` | Numba JIT-compiled SOR — same algorithm as `"sor"`, ~100x faster via `@njit` |
 
 Methods are registered in `scicomp3.ode.methods.METHODS` (IVP) and `scicomp3.bvp.methods` (BVP), looked up by name in `solve_ivp()` and `solve_bvp()`.
 
@@ -240,10 +220,12 @@ Methods are registered in `scicomp3.ode.methods.METHODS` (IVP) and `scicomp3.bvp
 
 ### Diffusion Limited Aggregation (DLA)
 
-`grow_dla_sor()` alternates between solving the steady-state diffusion equation via SOR and growing the aggregate by one point:
+Two DLA methods are available: PDE-based (via SOR) and Monte Carlo (via random walkers).
+
+**PDE-based DLA** (`grow_dla_sor`) alternates between solving the steady-state diffusion equation via SOR and growing the aggregate by one point. Growth probability is proportional to c^eta:
 
 ```python
-from scicomp3.bvp.dla import grow_dla_sor
+from scicomp3.models.dla_by_sor import grow_dla_sor
 from scicomp3.bvp.omega import get_optimal_omega
 
 N = 50
@@ -258,12 +240,36 @@ result = grow_dla_sor(
     max_iter_sor=2_000,
     post_step=fixed_bc,        # enforce BCs each SOR iteration
     post_growth=my_callback,   # optional: called after each growth step
+    method="sor_numba",        # use numba-accelerated solver
 )
-# result.y            — final concentration field
-# result.growth_mask  — boolean mask of cluster sites
+# result.y                  — final concentration field
+# result.growth_mask        — boolean mask of cluster sites
+# result.bvp_iters_per_step — BVP iteration count for each growth step
 ```
 
 The `eta` parameter controls cluster shape: low eta gives bushy growth, high eta gives spindly branches.
+
+**Monte Carlo DLA** (`grow_dla_mc`) uses random walkers that spawn at the top boundary and stick to the aggregate with probability `sticking_probability`:
+
+```python
+from scicomp3.models.dla_by_mc import grow_dla_mc
+
+result = grow_dla_mc(
+    n_walking_steps=50_000,
+    growth_seed=(N // 2, 1),
+    sticking_probability=1.0,
+    N=N,
+)
+# result.growth_mask — boolean mask of cluster sites
+```
+
+### Gray-Scott Reaction-Diffusion
+
+The Gray-Scott model simulates pattern formation via two coupled reaction-diffusion equations. Supports Forward Euler and IMEX (spectral) time-stepping:
+
+```python
+from scicomp3.models.gray_scott import GS_IMEX_euler_step, setup_FFT
+```
 
 ## Running Tests
 
@@ -289,47 +295,64 @@ The test suite covers:
 
 ## Running Scripts
 
-Scripts live in `scripts/` and produce plots or animations. They require `matplotlib` and `scienceplots`:
+Scripts live in `scripts/` and produce plots, animations, or benchmark output. They require `matplotlib` and `scienceplots`:
 
 ```bash
-# Quick smoke test (interactive plot)
-python scripts/a1_1_smoke_test.py
+# --- Assignment 1.1: Wave equation ---
+python scripts/a1_1_smoke_test.py                    # Quick smoke test
+python scripts/a1_1_cases_plot.py                     # Static plots for 3 ICs
+python scripts/a1_1_cases_animation.py                # Animated GIFs
+python scripts/a1_1_cases_compared_to_analytical.py   # Numerical vs analytical error
 
-# Generate static plots for all wave cases → images/figures/
-python scripts/a1_1_cases_plot.py
+# --- Assignment 1.2: 2D diffusion ---
+python scripts/a1_2_diffusion.py                      # Concentration field snapshots
+python scripts/a1_2_diffusion_animation.py             # Animated GIF
+python scripts/a1_2_diffusion_verification.py          # Verification vs analytical solution
 
-# Generate animated GIFs for all wave cases → images/gifs/
-python scripts/a1_1_cases_animation.py
+# --- Assignment 1.6: Iterative methods ---
+python scripts/a1_6_iterative_methods.py              # Compare Jacobi/GS/SOR
+python scripts/a1_6_iterative_convergence.py          # Convergence rate comparison
+python scripts/a1_6_iterative_jacobi.py               # Jacobi standalone
+python scripts/a1_6_iterative_gauss_seidel.py         # Gauss-Seidel standalone
+python scripts/a1_6_iterative_sor.py                  # SOR standalone
+python scripts/a1_6_objects_k_impact.py               # Object impact on iterations
+python scripts/a1_6_seeking_optimal_omega.py          # Optimal omega search
+python scripts/a1_6_omega_values.py                   # Omega parameter exploration
+python scripts/a1_6_omega_for_various_N_sim.py        # Omega vs grid size simulation
+python scripts/a1_6_omega_for_various_N_plot.py       # Omega vs grid size plotting
+python scripts/a1_6_sinks_jacobi.py                   # Sink with Jacobi
+python scripts/a1_6_sinks_gauss_seidel.py             # Sink with Gauss-Seidel
+python scripts/a1_6_sinks_sor.py                      # Sink with SOR
+python scripts/a1_6_sinks_sor_animation.py            # Sink SOR animation
+python scripts/a1_6_sinks_k_impact.py                 # Sink impact on convergence
+python scripts/a1_6_sinks_and_insulators_sor.py       # Combined sink + insulator
+python scripts/a1_6_insulators_jacobi.py              # Insulator with Jacobi
+python scripts/a1_6_insulators_gauss_seidel.py        # Insulator with Gauss-Seidel
+python scripts/a1_6_insulators_sor.py                 # Insulator with SOR
+python scripts/a1_6_insulators_sor_animation.py       # Insulator SOR animation
+python scripts/a1_6_insulators_k_impact.py            # Insulator impact on convergence
 
-# Numerical vs analytical comparison → images/figures/
-python scripts/a1_1_cases_compared_to_analytical.py
+# --- Assignment 2.1: DLA by SOR ---
+python scripts/a2_1_dla_by_sor.py                     # DLA cluster (static plot)
+python scripts/a2_1_dla_by_sor_animation.py           # DLA growth animation (GIF)
+python scripts/a2_1_dla_eta_sweep.py                  # Cluster shape vs eta
+python scripts/a2_1_dla_by_sor_numba.py               # Numba-accelerated DLA
+python scripts/a2_1_dla_by_sor_benchmark.py           # Benchmark: solver x init x omega (8 cases)
+python scripts/a2_1_dla_by_sor_benchmark_numba_warmup.py          # Benchmark: numba cold vs warm JIT
+python scripts/a2_1_dla_by_sor_benchmark_interpretation_numba.py  # Numba performance interpretation
+python scripts/a2_1_dla_by_sor_numba_benchmark_diff_N.py          # Benchmark: numba scaling with N
 
-# 2D diffusion: concentration fields → images/figures/
-python scripts/a1_2_diffusion.py
+# --- Assignment 2.2: DLA comparison SOR vs MC ---
+python scripts/a2_2_dla_comparison_sor_vs_mc_sim.py   # Simulate both SOR and MC methods
+python scripts/a2_2_dla_comparison_sor_vs_mc_plot.py  # Plot comparison
+python scripts/a2_2_compare_pde_mc_dla_animation.py   # Side-by-side animation (3 panels)
+python scripts/a2_2_compare_pde_mc_dla_animation_sweeping.py  # Sweep (eta, Ps) pairs
+python scripts/a2_2_dla_by_mc_animation.py            # MC DLA animation
+python scripts/a2_2_dla_by_mc_animation_legacy.py     # MC DLA animation (legacy API)
+python scripts/a2_2_dla_by_mc_sticking_probabilities.py  # Sticking probability analysis
 
-# 2D diffusion vs analytical verification → images/figures/
-python scripts/a1_2_diffusion_verification.py
-
-# Compare iterative methods (Jacobi, GS, SOR) → images/figures/
-python scripts/a1_6_iterative_methods.py
-
-# Convergence rate comparison → images/figures/
-python scripts/a1_6_iterative_convergence.py
-
-# Object impact on iteration count → images/figures/
-python scripts/a1_6_objects_k_impact.py
-
-# Optimal omega search with objects → images/figures/
-python scripts/a1_6_seeking_optimal_omega.py
-
-# DLA cluster via SOR → images/figures/
-python scripts/a2_1_dla_by_sor.py
-
-# DLA growth animation → images/gifs/
-python scripts/a2_1_dla_by_sor_animation.py
-
-# DLA cluster shape vs eta → images/figures/
-python scripts/a2_1_dla_eta_sweep.py
+# --- Assignment 2.3: Pattern analysis ---
+python scripts/a2_3_plot_patterns.py                  # Plot cluster patterns
 ```
 
 ## Adding a New Time-Stepping Method
@@ -372,6 +395,7 @@ def my_pde_rhs(t, y, *params):
 ## Dependencies
 
 - **Required**: `numpy`, `scipy`, `joblib`
+- **Acceleration**: `numba` >= 0.64.0 (JIT-compiled SOR kernel)
 - **Plotting**: `matplotlib`, `scienceplots` (optional, needed for scripts)
 - **Testing**: `pytest` (optional)
 
