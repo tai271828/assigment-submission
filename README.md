@@ -2,9 +2,10 @@
 
 Numerical solvers for the 1D wave equation, 2D diffusion equation, steady-state Laplace equation, and Diffusion Limited Aggregation (DLA), built for the Scientific Computing course (Assignment Sets 1 & 2).
 
-## Quick Start
+## Quick Start - Specific to Assignment 2
+Please look for scripts prefixed with `a2` in `scripts/a2-*` to reproduce everything we show on our report.
 
-`scicomp3` is released to [PyPI](https://test.pypi.org/project/scicomp3/). You can easily to use it by installing via pip.
+`scicomp3` is released to [PyPI](https://test.pypi.org/project/scicomp3/). You can easily to run the scripts by installing via pip.
 
 ```bash
 pip install scicomp3
@@ -12,7 +13,7 @@ pip install scicomp3
 
 Now you are ready to try everything under `scripts`!!
 
-
+### Quick Start - General
 For example, test the installation:
 
 ```bash
