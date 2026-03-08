@@ -81,6 +81,29 @@ class DLAMCResultLegacy:
     growth_mask: np.ndarray
 
 
+@dataclass
+class NSResult:
+    """Container for Navier-Stokes simulation results.
+
+    Attributes:
+        t: Time points of saved snapshots
+        u: x-velocity snapshots, shape (n_saved, Ny, Nx)
+        v: y-velocity snapshots, shape (n_saved, Ny, Nx)
+        p: pressure snapshots, shape (n_saved, Ny, Nx)
+        Re: Reynolds number
+        method: Solver method name ("fd", "lbm", "fem")
+        stable: Whether the simulation remained stable
+    """
+
+    t: np.ndarray
+    u: np.ndarray
+    v: np.ndarray
+    p: np.ndarray
+    Re: float
+    method: str
+    stable: bool = True
+
+
 def find_y(res: ODEResult, t):
     """Compute the y-value corresponding to the given t value"""
     for i in range(len(res.t)):
