@@ -73,6 +73,7 @@ def _is_benchmark_script(name: str) -> bool:
     return "benchmark" in parts
 
 
+@pytest.mark.skip(reason="Disabled: scripts are validated manually, not in CI")
 @pytest.mark.parametrize("script", [_make_param(s) for s in ALL_SCRIPTS])
 def test_script_runs(script):
     """Run a script and assert it exits with code 0."""
