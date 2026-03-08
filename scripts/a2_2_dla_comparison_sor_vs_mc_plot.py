@@ -8,7 +8,8 @@ of eta and MC results as a function of sticking probability, with error bars
 showing the standard deviation across the batch.
 
 Input:  data/dla_sor_vs_mc.pkl
-Output: images/figures/dla_sor_vs_mc.png
+Output: images/figures/a2_2_dla_sor_vs_mc.png
+        images/figures/a2_2_dla_sor_vs_mc_fractal.png
 """
 
 import shutil
@@ -48,7 +49,7 @@ COLOUR_MC = "tab:blue"
 STAT_NAMES = ["Highest point", "Broadness", "Fractal dimension"]
 N_STATS = len(STAT_NAMES)
 
-fig, axes = plt.subplots(1, N_STATS, figsize=(12, 4))
+fig, axes = plt.subplots(N_STATS, 1, figsize=(4, N_STATS * 4), constrained_layout=True)
 
 for stat_idx, (ax_mc, stat_name) in enumerate(zip(axes, STAT_NAMES)):
     # Plot MC results vs sticking probability
@@ -84,7 +85,7 @@ lines2, labels2 = ax_mc.get_legend_handles_labels()
 axes[0].legend(lines1 + lines2, labels1 + labels2, loc="upper left")
 
 fig.suptitle(
-    f"DLA cluster statistics: SOR vs MC (${N}\\times{N}$ grid, cluster size = {n_steps}, sample size = {batch_size})",
+    f"DLA cluster statistics: SOR vs MC\n(${N}\\times{N}$ grid, cluster size = {n_steps}, sample size = {batch_size})",
     fontsize=12,
 )
 plt.tight_layout()
@@ -94,5 +95,52 @@ out_dir.mkdir(parents=True, exist_ok=True)
 fig_path = out_dir / "a2_2_dla_sor_vs_mc.png"
 plt.savefig(fig_path, dpi=300)
 print(f"Saved → {fig_path}")
+
+# Second figure: fractal dimension only
+FRACTAL_IDX = 2
+
+fig2, ax_mc2 = plt.subplots(1, 1, figsize=(4, 4), constrained_layout=True)
+
+mc_means = [mc_batches[p][:, FRACTAL_IDX].mean() for p in sticking_probabilities]
+mc_stds = [mc_batches[p][:, FRACTAL_IDX].std() for p in sticking_probabilities]
+ax_mc2.errorbar(
+    sticking_probabilities,
+    mc_means,
+    yerr=mc_stds,
+    marker="s",
+    label="MC",
+    color=COLOUR_MC,
+    linestyle="--",
+)
+
+ax_sor2 = ax_mc2.twiny()
+sor_means = [sor_batches[eta][:, FRACTAL_IDX].mean() for eta in etas]
+sor_stds = [sor_batches[eta][:, FRACTAL_IDX].std() for eta in etas]
+ax_sor2.errorbar(
+    etas,
+    sor_means,
+    yerr=sor_stds,
+    marker="o",
+    label="SOR",
+    color=COLOUR_SOR,
+)
+
+ax_sor2.set_xlabel("$\\eta$ (SOR)", color=COLOUR_SOR)
+ax_sor2.tick_params(axis="x", colors=COLOUR_SOR)
+ax_mc2.set_xlabel("$p_s$ (MC)", color=COLOUR_MC)
+ax_mc2.tick_params(axis="x", colors=COLOUR_MC)
+
+lines1, labels1 = ax_sor2.get_legend_handles_labels()
+lines2, labels2 = ax_mc2.get_legend_handles_labels()
+ax_mc2.legend(lines1 + lines2, labels1 + labels2, loc="upper left")
+
+fig2.suptitle(
+    f"DLA fractal dimension: SOR vs MC\n(${N}\\times{N}$ grid, cluster size = {n_steps}, sample size = {batch_size})",
+    fontsize=12,
+)
+
+fig2_path = out_dir / "a2_2_dla_sor_vs_mc_fractal.png"
+fig2.savefig(fig2_path, dpi=300)
+print(f"Saved → {fig2_path}")
 
 plt.show()

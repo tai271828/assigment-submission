@@ -19,11 +19,12 @@ styles = (
     else ["science", "no-latex"]
 )
 plt.style.use(styles)
+plt.rcParams.update({"font.size": 14})
 
 
 # -- Parameters --------------------------------------------------------------
-N = 50
-N_STEPS = 100
+N = 100
+N_STEPS = 300
 SEED = 42
 STICKING_PROBS = (0.1, 0.5, 1.0)
 
@@ -33,7 +34,8 @@ growth_seed = (N // 2, N // 2)
 print(f"DLA comparison: N={N}, n_steps={N_STEPS}")
 
 # -- Build figure --------------------------------------------------------
-fig, axes = plt.subplots(1, 3, figsize=(16, 5))
+n_rows = len(STICKING_PROBS)
+fig, axes = plt.subplots(n_rows, 1, figsize=(4, 4 * n_rows), constrained_layout=True)
 
 
 for ax, p in zip(axes, STICKING_PROBS):
@@ -64,22 +66,26 @@ for ax, p in zip(axes, STICKING_PROBS):
         vmin=0,
         vmax=N_STEPS,
     )
-    fig.colorbar(im, ax=ax, label="Growth step")
-    ax.set_xlabel("$x$")
-    ax.set_ylabel("$y$")
+    ax.set_xlabel("$x$", fontsize=16)
+    ax.set_ylabel("$y$", fontsize=16)
     ax.set_aspect("equal")
-    ax.set_title(f"$p_s = {p}$")
+    n_sites = np.count_nonzero(~np.isnan(growth_order))
+    ax.set_title(f"$p_s = {p}$  ({n_sites} sites)", fontsize=16)
+
+cbar = fig.colorbar(im, ax=axes[0], location="top", fraction=0.05, pad=0.12)
+cbar.set_label("Growth step", fontsize=14)
+cbar.ax.tick_params(labelsize=12)
 
 fig.suptitle(
-    f"MC-based DLA on a {N}$\\times${N} grid for various values of $p_s$", fontsize=14
+    f"DLA cluster shape vs $p_s$\n{N_STEPS} steps on {N}$\\times${N} grid",
+    fontsize=18,
 )
-plt.tight_layout()
 
 # Save
 out_dir = Path(__file__).parent.parent / "images" / "figures"
 out_dir.mkdir(parents=True, exist_ok=True)
 fig_path = out_dir / "a2_2_dla_by_mc_sticking_probs.png"
-plt.savefig(fig_path, dpi=150)
+plt.savefig(fig_path, dpi=300)
 print(f"Saved → {fig_path}")
 
 plt.show()
