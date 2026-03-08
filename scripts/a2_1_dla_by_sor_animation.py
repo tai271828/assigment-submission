@@ -1,10 +1,10 @@
 """DLA growth animation via SOR (Assignment 2.1).
 
 Runs a PDE-based DLA simulation step by step and animates:
-  - Left:  the growing cluster coloured by growth order.
-  - Right: the concentration field with cluster overlay.
+  - Top:    the growing cluster coloured by growth order.
+  - Bottom: the concentration field with cluster overlay.
 
-The animation is saved as a GIF and also displayed interactively.
+The animation is saved as a GIF and the final frame as a PNG.
 """
 
 import shutil
@@ -35,9 +35,9 @@ def fixed_bc(k, y):
 
 
 # -- Parameters --------------------------------------------------------------
-N = 50
-N_STEPS = 100
-ETA = 1.0
+N = 100
+N_STEPS = 300
+ETA = 2.0
 SEED = 42
 OMEGA = get_optimal_omega(N)
 TOL = 1e-4
@@ -86,9 +86,9 @@ n_cluster = result.growth_mask.sum()
 print(f"Done. Cluster size: {n_cluster} sites, {len(frames)} frames")
 
 # -- Build animation --------------------------------------------------------
-fig, axes = plt.subplots(1, 2, figsize=(11, 5))
+fig, axes = plt.subplots(2, 1, figsize=(6, 10))
 
-# Left: cluster coloured by growth order
+# Top: cluster coloured by growth order
 ax_cluster = axes[0]
 cluster_display = np.where(np.isnan(frames[0][0]), np.nan, frames[0][0])
 im_cluster = ax_cluster.pcolormesh(
@@ -106,7 +106,7 @@ ax_cluster.set_ylabel("$y$")
 ax_cluster.set_aspect("equal")
 title_cluster = ax_cluster.set_title(f"DLA cluster ($\\eta={ETA}$) — step 0")
 
-# Right: concentration field
+# Bottom: concentration field
 ax_conc = axes[1]
 im_conc = ax_conc.pcolormesh(
     grid.X,
@@ -159,5 +159,13 @@ gif_path = out_dir / "a2_1_dla_by_sor.gif"
 print(f"Saving animation ({len(frames)} frames)...")
 anim.save(gif_path, writer="pillow", fps=15, dpi=100)
 print(f"Saved → {gif_path}")
+
+# Save final frame as PNG
+update(len(frames) - 1)
+fig_dir = Path(__file__).parent.parent / "images" / "figures"
+fig_dir.mkdir(parents=True, exist_ok=True)
+png_path = fig_dir / "a2_1_dla_by_sor_final.png"
+fig.savefig(png_path, dpi=150, bbox_inches="tight")
+print(f"Saved → {png_path}")
 
 plt.show()

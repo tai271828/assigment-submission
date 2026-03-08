@@ -29,7 +29,7 @@ def fixed_bc(k, y):
 
 # -- Parameters --------------------------------------------------------------
 N = 100
-N_STEPS = 100
+N_STEPS = 300
 SEED = 42
 OMEGA = get_optimal_omega(N)
 TOL = 1e-4
