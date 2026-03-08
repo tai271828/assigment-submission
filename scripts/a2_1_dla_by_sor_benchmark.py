@@ -84,7 +84,7 @@ print(f"Benchmark: N={N}, n_steps={N_STEPS}, eta={ETA}")
 print(f"  omega_opt={OMEGA_OPT:.4f}, omega_gs={OMEGA_GS:.4f}")
 print()
 header = (f"{'Case':<32} {'Time (s)':>10} {'Cluster':>10} {'Speedup':>10}"
-          f" {'Total iter':>12} {'Mean/step':>10} {'Max/step':>10}")
+          f" {'Total iter':>12} {'Mean/step':>10} {'Max/step':>10} {'@ step':>8}")
 print(header)
 print("-" * len(header))
 
@@ -97,5 +97,6 @@ for method, c0_mode, omega, label in cases:
     total_iter = iters.sum()
     mean_iter = iters.mean()
     max_iter_step = iters.max()
+    max_at_step = int(iters.argmax()) + 1  # 1-indexed growth step
     print(f"{label:<32} {t:>10.2f} {c:>10d} {speedup:>9.2f}x"
-          f" {total_iter:>12d} {mean_iter:>10.1f} {max_iter_step:>10d}")
+          f" {total_iter:>12d} {mean_iter:>10.1f} {max_iter_step:>10d} {max_at_step:>8d}")
