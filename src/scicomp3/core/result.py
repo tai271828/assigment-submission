@@ -49,10 +49,12 @@ class DLASORResult:
     Attributes:
         y: Final solution array
         growth_mask: Final mask array marking the grown aggregate
+        bvp_iters_per_step: BVP iteration count for each growth step
     """
 
     y: np.ndarray
     growth_mask: np.ndarray
+    bvp_iters_per_step: np.ndarray = None
 
 
 @dataclass

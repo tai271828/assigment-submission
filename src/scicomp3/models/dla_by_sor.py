@@ -123,6 +123,7 @@ def grow_dla_sor(
     y = y0.copy()
     N = len(y) - 1
     growth_step, growth_mask = _make_growth_step(growth_seed, eta, N)
+    bvp_iters = []
     for step in range(1, n_iter_growth + 1):
         result = solve_bvp(
             y0=y,
@@ -135,6 +136,7 @@ def grow_dla_sor(
             **kwargs,
         )
         y = result.y
+        bvp_iters.append(result.n_iter)
 
         try:
             growth_mask = growth_step(y)
@@ -145,4 +147,4 @@ def grow_dla_sor(
         if post_growth is not None:
             post_growth(step, y, growth_mask)
 
-    return DLASORResult(y, growth_mask)
+    return DLASORResult(y, growth_mask, np.array(bvp_iters))
