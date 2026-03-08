@@ -25,6 +25,8 @@ styles = (
 )
 plt.style.use(styles)
 
+# Select only the SOR data from index 0 to index SOR_CUTOFF
+SOR_CUTOFF = 10
 
 # Load data
 data_dir = Path(__file__).parent.parent / "data"
@@ -33,7 +35,7 @@ results = load(data_dir / filename)
 
 sor_batches = results["sor_batches"]
 mc_batches = results["mc_batches"]
-etas = results["etas"]
+etas = results["etas"][:SOR_CUTOFF]
 sticking_probabilities = results["sticking_probabilities"]
 N = results["N"]
 n_steps = results["n_steps"]
@@ -50,8 +52,8 @@ fig, axes = plt.subplots(1, N_STATS, figsize=(12, 4))
 
 for stat_idx, (ax, stat_name) in enumerate(zip(axes, STAT_NAMES)):
     # Plot SOR results vs eta
-    sor_means = [sor_batches[eta][:, stat_idx].mean() for eta in etas]
-    sor_stds = [sor_batches[eta][:, stat_idx].std() for eta in etas]
+    sor_means = [sor_batches[eta][:, stat_idx].mean() for eta in etas][:SOR_CUTOFF]
+    sor_stds = [sor_batches[eta][:, stat_idx].std() for eta in etas][:SOR_CUTOFF]
     ax.errorbar(
         etas, sor_means, yerr=sor_stds, marker="o", label="SOR", color=COLOUR_SOR
     )
