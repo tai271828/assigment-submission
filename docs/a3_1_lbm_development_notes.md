@@ -233,6 +233,8 @@ tests/
 
 ## How to Run
 
+### Custom Python LBM
+
 ```bash
 # Install the package
 uv pip install -e ".[dev]"
@@ -246,3 +248,51 @@ uv pip install -e ".[dev]"
 # Try higher Re with more resolution
 .venv/bin/python scripts/a3_1_lbm_karman.py --re 200 --resolution 20 --steps 40000
 ```
+
+### Palabos LBM (C++ framework)
+
+The same Kármán vortex street was also implemented using Palabos, a production-grade
+C++ LBM framework, for comparison. The code is in:
+`/palabos-workspace/karman_lbm/`
+
+```bash
+# Build (from palabos-workspace/karman_lbm/build/)
+cmake .. -DCMAKE_BUILD_TYPE=Release
+make -j$(nproc)
+
+# Run (Re is cylinder-diameter-based, N = lattice nodes across channel height)
+./karman_lbm 100 82    # Re_D=100, 441x83 grid
+./karman_lbm 200 82    # Re_D=200, 441x83 grid
+./karman_lbm 300 120   # Re_D=300, 645x121 grid (higher res for stability)
+```
+
+**Key differences vs custom Python LBM:**
+- Palabos uses `IncomprFlowParam` which defines Re based on channel height,
+  not cylinder diameter. The code converts Re_D to Re_H internally.
+- Palabos boundary conditions (regularized velocity BC) are more sophisticated
+  than our simple equilibrium inlet, providing better accuracy near boundaries.
+- Palabos supports MPI parallelism out of the box.
+- The Schäfer-Turek geometry requires the cylinder to be offset from center
+  by at least 2 nodes to trigger the vortex shedding instability.
+
+**Palabos Results:**
+
+| Re_D | N | Grid | tau | Status |
+|:--:|:--:|:--:|:--:|:--|
+| 100 | 82 | 441×83 | 0.512 | Stable, clear vortex shedding |
+| 200 | 82 | 441×83 | 0.506 | Stable, vigorous vortex street |
+| 300 | 82 | 441×83 | 0.504 | Diverged (tau too close to 0.5) |
+| 300 | 120 | 645×121 | 0.506 | Stable with higher resolution |
+
+### Challenge 5: Palabos Re Convention Mismatch
+
+**Problem**: Initial Palabos runs at nominal Re=100 and Re=200 showed only steady
+symmetric wakes with no vortex shedding - the opposite of our Python LBM results.
+
+**Root cause**: Palabos `IncomprFlowParam` defines Reynolds number based on the
+channel height (Re_H = uMax * H / ν), not the cylinder diameter. The assignment
+uses Re_D = uMax * D / ν. Since H/D = 0.41/0.1 = 4.1, specifying Re=200 in Palabos
+actually corresponded to Re_D ≈ 49, which is below the vortex shedding threshold.
+
+**Resolution**: Added Re conversion: Re_H = Re_D × (H/D) = Re_D × 4.1. This maps
+Re_D=100 to Re_H=410, correctly placing it in the vortex shedding regime.
