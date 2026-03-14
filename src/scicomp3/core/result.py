@@ -3,6 +3,8 @@
 from dataclasses import dataclass
 import numpy as np
 
+from .config import KVSConfig
+
 
 @dataclass
 class ODEResult:
@@ -79,6 +81,24 @@ class DLAMCResultLegacy:
 
     walkers_mask: np.ndarray
     growth_mask: np.ndarray
+
+
+@dataclass
+class KVSResult:
+    """Result container for a Kármán Vortex Street simulation.
+
+    Attributes:
+        u:          Final velocity field, shape (Nx+1, Ny+1).
+        snapshots:  List of velocity field snapshots taken every plot_every
+                    steps.
+        config:     KVSConfig used for the simulation.
+        method:     Solver method used, e.g. 'fd', 'fe', 'lb'.
+    """
+
+    u: np.ndarray
+    snapshots: list
+    config: KVSConfig
+    method: str
 
 
 def find_y(res: ODEResult, t):
